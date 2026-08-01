@@ -33,20 +33,13 @@ void menuUpdate(MenuMachine &machine) {
 
   if (machine.state == MENU_STANDBY) {
     // In standby, the encoder moves the selection cursor between menu items.
-    // Item 1 is disabled while an exposure is running because the remaining-time
-    // editor must only be used when the timer is stopped.
-    if (exposureActive && machine.selectedItem == 1) {
-      machine.selectedItem = 0;
-      machine.forceRefresh = true;
-    }
-
+    // The editable order is: exposure state, exposure time, radius, Tmax.
     if (encoderRotationCount != 0) {
       int nextItem = machine.selectedItem;
       const int step = (encoderRotationCount > 0 ? 1 : -1);
+      const int itemCount = 4;
 
-      do {
-        nextItem = (nextItem + step + 5) % 5;
-      } while (nextItem == 1 && exposureActive);
+      nextItem = (nextItem + step + itemCount) % itemCount;
 
       machine.selectedItem = static_cast<uint8_t>(nextItem);
       encoderRotationCount = 0;
@@ -72,7 +65,7 @@ void menuUpdate(MenuMachine &machine) {
       else if (machine.selectedItem == 1) {
         // Item 1 adjusts the remaining exposure time, but only when the timer is idle.
         if (!exposureActive) {
-          exposureDurationMs = constrain(exposureDurationMs + (encoderRotationCount > 0 ? 1000UL : -1000UL), 1000UL, 60000UL);
+          exposureDurationMs = constrain(exposureDurationMs + (encoderRotationCount > 0 ? 5000UL : -5000UL), 1000UL, 60000UL);
           exposureElapsedMs = 0UL;
         }
       }
@@ -81,12 +74,6 @@ void menuUpdate(MenuMachine &machine) {
         servoSweepRadiusDeg = constrain(servoSweepRadiusDeg + (encoderRotationCount > 0 ? 1 : -1), 1, 20);
       }
       else if (machine.selectedItem == 3) {
-        // Adjust the exposure duration. Resetting the elapsed time keeps the timer
-        // consistent with the new configured duration.
-        exposureDurationMs = constrain(exposureDurationMs + (encoderRotationCount > 0 ? 1000UL : -1000UL), 1000UL, 60000UL);
-        exposureElapsedMs = 0UL;
-      }
-      else if (machine.selectedItem == 4) {
         // Adjust the maximum junction temperature threshold.
         maxJunctionTempC = constrain(maxJunctionTempC + (encoderRotationCount > 0 ? 1.0f : -1.0f), 30.0f, 90.0f);
       }
@@ -119,8 +106,7 @@ void menuOutput(MenuMachine &machine) {
   const bool isExposureActionSelected = machine.selectedItem == 0;
   const bool isExposureTimeRemainingSelected = machine.selectedItem == 1;
   const bool isRadiusItemSelected = machine.selectedItem == 2;
-  const bool isTemperatureItemSelected = machine.selectedItem == 3;
-  const bool isMaxTempItemSelected = machine.selectedItem == 4;
+  const bool isMaxTempItemSelected = machine.selectedItem == 3;
 
   if (shouldRenderFullMenu) {
     lcd.setCursor(0, 0);
@@ -131,11 +117,7 @@ void menuOutput(MenuMachine &machine) {
     const unsigned int remainingMinutes = remainingMs / 60000UL;
     const unsigned int remainingSeconds = (remainingMs % 60000UL) / 1000UL;
 
-    lcd.setCursor(12, 0);
-    lcd.print("   ");
-    lcd.setCursor(12, 0);
-    lcd.print(isExposureTimeRemainingSelected ? ">" : " ");
-    lcd.print("T:");
+    lcd.setCursor(15, 0);
     if (remainingMinutes < 10U) {
       lcd.print('0');
     }
@@ -147,43 +129,36 @@ void menuOutput(MenuMachine &machine) {
     lcd.print(remainingSeconds);
 
     lcd.setCursor(0, 1);
-    lcd.print(isRadiusItemSelected ? ">" : " ");
-    lcd.print("Rayon:");
-    lcd.print(servoSweepRadiusDeg);
-    lcd.setCursor(10, 1);
     lcd.print(isExposureActionSelected ? ">" : " ");
+    lcd.print("Etat:");
     lcd.print(exposureActive ? "RUN  " : "PAUSE");
 
     lcd.setCursor(0, 2);
-    lcd.print(isMaxTempItemSelected ? ">" : " ");
-    lcd.print("Tmax:");
-    lcd.print(static_cast<int>(maxJunctionTempC));
-    lcd.print("C");
-    lcd.print((char)223);
+    lcd.print(isRadiusItemSelected ? ">" : " ");
+    lcd.print("Rayon:");
+    lcd.print(servoSweepRadiusDeg);
 
     lcd.setCursor(0, 3);
-    lcd.print(isTemperatureItemSelected ? ">" : " ");
-    lcd.print("T:");
+    lcd.print(isMaxTempItemSelected ? ">" : " ");
+    lcd.print("Tj/Tmax:");
     lcd.print(static_cast<int>(junctionTempC));
-    lcd.print("C");
     lcd.print((char)223);
-    lcd.setCursor(9, 3);
-    lcd.print("ALARM:");
-    lcd.print(menuExposedAlarmActive ? "ERROR" : " NONE");
+    lcd.print("C/");
+    lcd.print(static_cast<int>(maxJunctionTempC));
+    lcd.print((char)223);
+    lcd.print("C");
 
     machine.lastRefreshMs = now;
   }
 
   if (shouldRefreshTimer) {
-    const unsigned long remainingMs = exposureActive ? (exposureDurationMs > exposureElapsedMs ? (exposureDurationMs - exposureElapsedMs) : 0UL) : 0UL;
+    const unsigned long remainingMs = (exposureDurationMs > exposureElapsedMs) ? (exposureDurationMs - exposureElapsedMs) : 0UL;
     const unsigned int remainingMinutes = remainingMs / 60000UL;
     const unsigned int remainingSeconds = (remainingMs % 60000UL) / 1000UL;
 
-    lcd.setCursor(12, 0);
-    lcd.print("   ");
-    lcd.setCursor(12, 0);
+    lcd.setCursor(6, 0);
     lcd.print(isExposureTimeRemainingSelected ? ">" : " ");
-    lcd.print("T:");
+    lcd.print("RESTANT:");
     if (remainingMinutes < 10U) {
       lcd.print('0');
     }
