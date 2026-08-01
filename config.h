@@ -1,0 +1,39 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <Arduino.h>
+
+// Pins du module encodeur KY-040
+constexpr uint8_t PIN_SM_ENCODER_CLK = 4;
+constexpr uint8_t PIN_SM_ENCODER_DT = 2;
+constexpr uint8_t PIN_SM_ENCODER_SW = 3;
+
+// Pins des machines de sortie
+constexpr uint8_t PIN_SM_RELAY = 5;
+constexpr uint8_t PIN_SM_FAN = 6;
+constexpr uint8_t PIN_SM_SERVO_PAN = 10;
+constexpr uint8_t PIN_SM_SERVO_TILT = 11;
+
+// Pins de l'afficheur LCD
+constexpr uint8_t PIN_SM_LCD_SDA = 8;
+constexpr uint8_t PIN_SM_LCD_SCL = 9;
+
+// Aliases conservés pour compatibilité avec le code existant
+constexpr uint8_t PIN_CLK = PIN_SM_ENCODER_CLK;
+constexpr uint8_t PIN_DT = PIN_SM_ENCODER_DT;
+constexpr uint8_t PIN_SW = PIN_SM_ENCODER_SW;
+constexpr uint8_t PIN_RELAY = PIN_SM_RELAY;
+constexpr uint8_t PIN_FAN = PIN_SM_FAN;
+constexpr uint8_t PIN_SERVO_PAN = PIN_SM_SERVO_PAN;
+constexpr uint8_t PIN_SERVO_TILT = PIN_SM_SERVO_TILT;
+constexpr uint8_t PIN_LCD_SDA = PIN_SM_LCD_SDA;
+constexpr uint8_t PIN_LCD_SCL = PIN_SM_LCD_SCL;
+
+constexpr uint8_t LCD_COLS = 20;
+constexpr uint8_t LCD_ROWS = 4;
+constexpr uint8_t LCD_I2C_ADDR = 0x27;
+
+constexpr float DEFAULT_MAX_JUNCTION_TEMP_C = 60.0f;
+constexpr float WARNING_TEMP_C = 50.0f;
+
+#endif
