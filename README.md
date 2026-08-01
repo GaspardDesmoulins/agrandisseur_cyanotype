@@ -7,7 +7,7 @@ Le firmware pilote l'exposition UV, son balayage mécanique, le refroidissement 
 ## Fonctions actuelles
 
 - Pilotage d'un projecteur UV par relais.
-- Minuterie d'exposition réglable de 1 à 60 secondes, initialisée à 5 secondes.
+- Minuterie d'exposition réglable de 5 secondes à 60 minutes, initialisée à 15 minutes. Le réglage progresse par pas de 5 secondes sous une minute, de 30 secondes entre 1 et 5 minutes, de 2 minutes entre 5 et 15 minutes, puis de 5 minutes au-delà.
 - Déplacement circulaire du projecteur avec deux servomoteurs (panoramique et inclinaison) pendant l'exposition pour répartir la lumière.
 - Ventilation à trois niveaux : faible hors exposition, moyenne pendant l'exposition et maximale en cas de sécurité thermique.
 - Interface utilisateur avec encodeur rotatif KY-040 et écran LCD I2C de 20 x 4 caractères.
@@ -41,6 +41,9 @@ La carte cible est une **Arduino Duemilanove**.
 | Servo d'inclinaison | 11 |
 | LCD I2C : SDA | 8 |
 | LCD I2C : SCL | 9 |
+| MAX6675 : SO | 12 |
+| MAX6675 : CS | 7 |
+| MAX6675 : SCK | 13 |
 
 L'adresse LCD configurée est `0x27`.
 
@@ -54,6 +57,7 @@ Le sketch principal est [agrandisseur_cyanotype.ino](agrandisseur_cyanotype.ino)
 - [relay_state_machine.cpp](relay_state_machine.cpp) commande le relais UV.
 - [fan_state_machine.cpp](fan_state_machine.cpp) ajuste la ventilation.
 - [uv_servo_state_machine.cpp](uv_servo_state_machine.cpp) pilote le balayage du projecteur.
+- [temperature_state_machine.cpp](temperature_state_machine.cpp) relève le thermocouple via la MAX6675 toutes les 250 ms.
 - [safety_state_machine.cpp](safety_state_machine.cpp) publie l'état de sécurité thermique.
 
 Les données communes sont déclarées dans [globals.h](globals.h) et la configuration matérielle dans [config.h](config.h). À chaque tour de boucle, toutes les fonctions `update()` calculent les nouveaux états avant que les fonctions `output()` appliquent les sorties matérielles.
@@ -65,6 +69,6 @@ Les données communes sont déclarées dans [globals.h](globals.h) et la configu
 
 ## État du projet
 
-La sécurité thermique est prête du point de vue logiciel, mais `junctionTempC` est actuellement initialisée à 25 °C et aucune lecture de sonde de température n'est encore implémentée. La coupure thermique ne peut donc pas protéger l'installation tant que cette acquisition n'est pas ajoutée et validée sur le matériel.
+La température de jonction est relevée par un thermocouple avec une MAX6675. Si le thermocouple est déconnecté ou si la sonde ne répond pas, le relais UV reste coupé, le ventilateur passe au maximum et l'écran affiche `ERR` pour la température de jonction.
 
 Le projet est en développement. Les valeurs d'exposition, la géométrie du balayage, le câblage et les protections doivent être testés avec le projecteur UV réellement installé dans le KROKUS 44 avant tout usage prolongé.

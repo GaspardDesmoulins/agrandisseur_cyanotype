@@ -10,6 +10,7 @@ extern bool boutonPresse;
 extern bool uvLedRequested;
 extern bool uvLedEnabled;
 extern float junctionTempC;
+extern bool junctionTempSensorFault;
 extern uint8_t fanDutyCycle;
 extern bool safetyTrip;
 extern bool servoControlEnabled;

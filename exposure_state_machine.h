@@ -6,7 +6,8 @@
 enum ExposureState {
   EXPOSURE_IDLE,
   EXPOSURE_RUNNING,
-  EXPOSURE_PAUSED
+  EXPOSURE_PAUSED,
+  EXPOSURE_SAFETY_PAUSED
 };
 
 struct ExposureMachine {

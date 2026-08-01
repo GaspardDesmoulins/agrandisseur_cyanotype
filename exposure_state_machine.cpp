@@ -1,9 +1,9 @@
 #include "exposure_state_machine.h"
 
 constexpr unsigned long EXPOSURE_STEP_MS = 1000UL;
-constexpr unsigned long DEFAULT_EXPOSURE_MS = 5000UL;
-constexpr unsigned long MIN_EXPOSURE_MS = 1000UL;
-constexpr unsigned long MAX_EXPOSURE_MS = 60000UL;
+constexpr unsigned long DEFAULT_EXPOSURE_MS = 900000UL;
+constexpr unsigned long MIN_EXPOSURE_MS = 5000UL;
+constexpr unsigned long MAX_EXPOSURE_MS = 3600000UL;
 
 void exposureInit(ExposureMachine &machine) {
   machine.state = EXPOSURE_IDLE;
@@ -23,6 +23,34 @@ void exposureUpdate(ExposureMachine &machine) {
   // the rest of the system all use the same timer values.
   machine.exposureDurationMs = exposureDurationMs;
   machine.exposureElapsedMs = exposureElapsedMs;
+
+  if (safetyTrip) {
+    if (machine.state == EXPOSURE_RUNNING) {
+      machine.state = EXPOSURE_SAFETY_PAUSED;
+      machine.exposureElapsedMs += now - machine.lastTickMs;
+      machine.lastTickMs = now;
+      machine.needsOutput = true;
+    }
+
+    uvLedRequested = false;
+    servoControlEnabled = false;
+    exposureActive = false;
+    exposureElapsedMs = machine.exposureElapsedMs;
+    exposureDurationMs = machine.exposureDurationMs;
+    return;
+  }
+
+  if (machine.state == EXPOSURE_SAFETY_PAUSED) {
+    machine.state = EXPOSURE_RUNNING;
+    machine.lastTickMs = now;
+    machine.needsOutput = true;
+    uvLedRequested = true;
+    servoControlEnabled = true;
+    exposureActive = true;
+    exposureElapsedMs = machine.exposureElapsedMs;
+    exposureDurationMs = machine.exposureDurationMs;
+    return;
+  }
 
   if (machine.requestStart) {
     machine.requestStart = false;

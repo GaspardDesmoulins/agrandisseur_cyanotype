@@ -6,6 +6,7 @@
 #include "fan_state_machine.h"
 #include "uv_servo_state_machine.h"
 #include "exposure_state_machine.h"
+#include "temperature_state_machine.h"
 
 MenuMachine menuMachine;
 EncoderMachine encoderMachine;
@@ -14,6 +15,7 @@ SafetyMachine safetyMachine;
 FanMachine fanMachine;
 UvServoMachine uvServoMachine;
 ExposureMachine exposureMachine;
+TemperatureMachine temperatureMachine;
 
 void setup() {
   pinMode(PIN_SM_ENCODER_CLK, INPUT_PULLUP);
@@ -32,10 +34,12 @@ void setup() {
   fanInit(fanMachine);
   uvServoInit(uvServoMachine);
   exposureInit(exposureMachine);
+  temperatureInit(temperatureMachine);
 }
 
 void loop() {
   encoderUpdate(encoderMachine);
+  temperatureUpdate(temperatureMachine);
   safetyUpdate(safetyMachine);
   relayUpdate(relayMachine);
   fanUpdate(fanMachine);
@@ -49,5 +53,6 @@ void loop() {
   fanOutput(fanMachine);
   uvServoOutput(uvServoMachine);
   exposureOutput(exposureMachine);
+  temperatureOutput(temperatureMachine);
   menuOutput(menuMachine);
 }

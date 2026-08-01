@@ -14,6 +14,11 @@ constexpr uint8_t PIN_SM_FAN = 6;
 constexpr uint8_t PIN_SM_SERVO_PAN = 10;
 constexpr uint8_t PIN_SM_SERVO_TILT = 11;
 
+// Pins du convertisseur thermocouple MAX6675
+constexpr uint8_t PIN_SM_MAX6675_SO = 12;
+constexpr uint8_t PIN_SM_MAX6675_CS = 7;
+constexpr uint8_t PIN_SM_MAX6675_SCK = 13;
+
 // Pins de l'afficheur LCD
 constexpr uint8_t PIN_SM_LCD_SDA = 8;
 constexpr uint8_t PIN_SM_LCD_SCL = 9;
@@ -26,6 +31,9 @@ constexpr uint8_t PIN_RELAY = PIN_SM_RELAY;
 constexpr uint8_t PIN_FAN = PIN_SM_FAN;
 constexpr uint8_t PIN_SERVO_PAN = PIN_SM_SERVO_PAN;
 constexpr uint8_t PIN_SERVO_TILT = PIN_SM_SERVO_TILT;
+constexpr uint8_t PIN_MAX6675_SO = PIN_SM_MAX6675_SO;
+constexpr uint8_t PIN_MAX6675_CS = PIN_SM_MAX6675_CS;
+constexpr uint8_t PIN_MAX6675_SCK = PIN_SM_MAX6675_SCK;
 constexpr uint8_t PIN_LCD_SDA = PIN_SM_LCD_SDA;
 constexpr uint8_t PIN_LCD_SCL = PIN_SM_LCD_SCL;
 
@@ -33,7 +41,7 @@ constexpr uint8_t LCD_COLS = 20;
 constexpr uint8_t LCD_ROWS = 4;
 constexpr uint8_t LCD_I2C_ADDR = 0x27;
 
-constexpr float DEFAULT_MAX_JUNCTION_TEMP_C = 60.0f;
-constexpr float WARNING_TEMP_C = 50.0f;
+constexpr float DEFAULT_MAX_JUNCTION_TEMP_C = 50.0f;
+constexpr float WARNING_TEMP_C = 45.0f;
 
 #endif

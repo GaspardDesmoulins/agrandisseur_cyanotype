@@ -65,7 +65,21 @@ void menuUpdate(MenuMachine &machine) {
       else if (machine.selectedItem == 1) {
         // Item 1 adjusts the remaining exposure time, but only when the timer is idle.
         if (!exposureActive) {
-          exposureDurationMs = constrain(exposureDurationMs + (encoderRotationCount > 0 ? 5000UL : -5000UL), 1000UL, 60000UL);
+          const bool increaseDuration = encoderRotationCount > 0;
+          unsigned long adjustmentMs = 5000UL;
+
+          if ((increaseDuration && exposureDurationMs >= 900000UL) || (!increaseDuration && exposureDurationMs > 900000UL)) {
+            adjustmentMs = 300000UL;
+          }
+          else if ((increaseDuration && exposureDurationMs >= 300000UL) || (!increaseDuration && exposureDurationMs > 300000UL)) {
+            adjustmentMs = 120000UL;
+          }
+          else if ((increaseDuration && exposureDurationMs >= 60000UL) || (!increaseDuration && exposureDurationMs > 60000UL)) {
+            adjustmentMs = 30000UL;
+          }
+
+          const long adjustedDurationMs = static_cast<long>(exposureDurationMs) + (increaseDuration ? static_cast<long>(adjustmentMs) : -static_cast<long>(adjustmentMs));
+          exposureDurationMs = constrain(adjustedDurationMs, 5000L, 3600000L);
           exposureElapsedMs = 0UL;
         }
       }
@@ -137,13 +151,20 @@ void menuOutput(MenuMachine &machine) {
     lcd.print(isRadiusItemSelected ? ">" : " ");
     lcd.print("Rayon:");
     lcd.print(servoSweepRadiusDeg);
+    lcd.setCursor(10, 2);
+    lcd.print(safetyTrip ? "SAFETY:KO!" : "SAFETY:OK ");
 
     lcd.setCursor(0, 3);
     lcd.print(isMaxTempItemSelected ? ">" : " ");
-    lcd.print("Tj/Tmax:");
-    lcd.print(static_cast<int>(junctionTempC));
-    lcd.print((char)223);
-    lcd.print("C/");
+    lcd.print("Tj/Tmax: ");
+    if (junctionTempSensorFault) {
+      lcd.print("ERR/");
+    }
+    else {
+      lcd.print(static_cast<int>(junctionTempC));
+      lcd.print((char)223);
+      lcd.print("C/");
+    }
     lcd.print(static_cast<int>(maxJunctionTempC));
     lcd.print((char)223);
     lcd.print("C");

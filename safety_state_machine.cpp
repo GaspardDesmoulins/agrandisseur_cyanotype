@@ -6,7 +6,7 @@ void safetyInit(SafetyMachine &machine) {
 }
 
 void safetyUpdate(SafetyMachine &machine) {
-  const bool trip = junctionTempC >= maxJunctionTempC;
+  const bool trip = junctionTempSensorFault || junctionTempC >= maxJunctionTempC;
 
   if (trip) {
     machine.state = SAFETY_TRIP;
