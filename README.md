@@ -1,4 +1,4 @@
-# Ecran-module-KY-040
+# agrandisseur_cyanotype
 
 Ce projet Arduino est organisé autour de plusieurs machines à états.
 
