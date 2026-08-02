@@ -1,12 +1,17 @@
 #include "safety_state_machine.h"
 
+constexpr float SAFETY_RESET_HYSTERESIS_C = 5.0f;
+
 void safetyInit(SafetyMachine &machine) {
   machine.state = SAFETY_OK;
   machine.needsOutput = true;
 }
 
 void safetyUpdate(SafetyMachine &machine) {
-  const bool trip = junctionTempSensorFault || junctionTempC >= maxJunctionTempC;
+  const float resetTemperatureC = maxJunctionTempC - SAFETY_RESET_HYSTERESIS_C;
+  const bool trip = junctionTempSensorFault ||
+                    junctionTempC >= maxJunctionTempC ||
+                    (machine.state == SAFETY_TRIP && junctionTempC > resetTemperatureC);
 
   if (trip) {
     machine.state = SAFETY_TRIP;

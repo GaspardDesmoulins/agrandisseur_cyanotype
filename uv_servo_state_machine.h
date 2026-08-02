@@ -18,11 +18,14 @@ struct UvServoMachine {
   Servo tiltServo;
   int panAngle;
   int tiltAngle;
+  unsigned long lastSweepMs;
+  bool pwmEnabled;
   bool needsOutput;
 };
 
 void uvServoInit(UvServoMachine &machine);
 void uvServoUpdate(UvServoMachine &machine);
 void uvServoOutput(UvServoMachine &machine);
+int uvServoMaxSweepRadiusDeg();
 
 #endif

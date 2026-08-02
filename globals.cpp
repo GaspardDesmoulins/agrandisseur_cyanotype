@@ -9,7 +9,7 @@ float junctionTempC = 25.0f;
 bool junctionTempSensorFault = true;
 uint8_t fanDutyCycle = 0;
 bool safetyTrip = false;
-bool servoControlEnabled = true;
+bool servoControlEnabled = false;
 int menuExposedSelection = 0;
 bool menuExposedAlarmActive = false;
 unsigned long exposureDurationMs = 900000UL;
@@ -18,6 +18,7 @@ bool exposureActive = false;
 float maxJunctionTempC = DEFAULT_MAX_JUNCTION_TEMP_C;
 int servoSweepRadiusDeg = 5;
 int servoSweepPhaseDeg = 0;
+unsigned long servoSweepIntervalMs = 40UL;
 int encoderRotationCount = 0;
 bool encoderButtonPressedEvent = false;
 

@@ -1,5 +1,6 @@
 #include "menu_state_machine.h"
 #include "exposure_state_machine.h"
+#include "uv_servo_state_machine.h"
 
 extern ExposureMachine exposureMachine;
 
@@ -25,8 +26,20 @@ void menuUpdate(MenuMachine &machine) {
   const bool inputChanged = encoderButtonPressedEvent || (encoderRotationCount != 0);
 
   if (encoderButtonPressedEvent) {
-    machine.editing = !machine.editing;
-    machine.state = machine.editing ? MENU_EDIT : MENU_STANDBY;
+    if (machine.selectedItem == 0) {
+      if (exposureActive) {
+        exposureMachine.requestPause = true;
+      }
+      else {
+        exposureMachine.requestStart = true;
+      }
+      machine.editing = false;
+      machine.state = MENU_STANDBY;
+    }
+    else {
+      machine.editing = !machine.editing;
+      machine.state = machine.editing ? MENU_EDIT : MENU_STANDBY;
+    }
     encoderButtonPressedEvent = false;
     machine.forceRefresh = true;
   }
@@ -51,18 +64,7 @@ void menuUpdate(MenuMachine &machine) {
     // We process that pending change once and then reset the counter so the same
     // turn is not applied again on the next loop iteration.
     if (encoderRotationCount != 0) {
-      if (machine.selectedItem == 0) {
-        // Item 0 starts or pauses the exposure timer.
-        if (!exposureActive) {
-          exposureMachine.requestStart = true;
-          exposureActive = true;
-        }
-        else {
-          exposureMachine.requestPause = true;
-          exposureActive = false;
-        }
-      }
-      else if (machine.selectedItem == 1) {
+      if (machine.selectedItem == 1) {
         // Item 1 adjusts the remaining exposure time, but only when the timer is idle.
         if (!exposureActive) {
           const bool increaseDuration = encoderRotationCount > 0;
@@ -85,7 +87,7 @@ void menuUpdate(MenuMachine &machine) {
       }
       else if (machine.selectedItem == 2) {
         // Adjust the servo sweep radius.
-        servoSweepRadiusDeg = constrain(servoSweepRadiusDeg + (encoderRotationCount > 0 ? 1 : -1), 1, 20);
+        servoSweepRadiusDeg = constrain(servoSweepRadiusDeg + (encoderRotationCount > 0 ? 1 : -1), 1, uvServoMaxSweepRadiusDeg());
       }
       else if (machine.selectedItem == 3) {
         // Adjust the maximum junction temperature threshold.
@@ -145,11 +147,14 @@ void menuOutput(MenuMachine &machine) {
     lcd.setCursor(0, 1);
     lcd.print(isExposureActionSelected ? ">" : " ");
     lcd.print("Etat:");
-    lcd.print(exposureActive ? "RUN  " : "PAUSE");
+    lcd.print(exposureActive ? "EXPOSING" : "PAUSED  ");
 
     lcd.setCursor(0, 2);
     lcd.print(isRadiusItemSelected ? ">" : " ");
     lcd.print("Rayon:");
+    if (servoSweepRadiusDeg < 10) {
+      lcd.print('0');
+    }
     lcd.print(servoSweepRadiusDeg);
     lcd.setCursor(10, 2);
     lcd.print(safetyTrip ? "SAFETY:KO!" : "SAFETY:OK ");

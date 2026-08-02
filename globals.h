@@ -24,6 +24,7 @@ extern bool exposureActive;
 extern float maxJunctionTempC;
 extern int servoSweepRadiusDeg;
 extern int servoSweepPhaseDeg;
+extern unsigned long servoSweepIntervalMs;
 
 struct SystemState {
   bool encoderChanged;

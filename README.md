@@ -8,7 +8,7 @@ Le firmware pilote l'exposition UV, son balayage mécanique, le refroidissement 
 
 - Pilotage d'un projecteur UV par relais.
 - Minuterie d'exposition réglable de 5 secondes à 60 minutes, initialisée à 15 minutes. Le réglage progresse par pas de 5 secondes sous une minute, de 30 secondes entre 1 et 5 minutes, de 2 minutes entre 5 et 15 minutes, puis de 5 minutes au-delà.
-- Déplacement circulaire du projecteur avec deux servomoteurs (panoramique et inclinaison) pendant l'exposition pour répartir la lumière.
+- Déplacement circulaire du projecteur avec deux servomoteurs (panoramique et inclinaison) pendant l'exposition pour répartir la lumière. Les PWM des servos sont coupés hors exposition.
 - Ventilation à trois niveaux : faible hors exposition, moyenne pendant l'exposition et maximale en cas de sécurité thermique.
 - Interface utilisateur avec encodeur rotatif KY-040 et écran LCD I2C de 20 x 4 caractères.
 - Coupure du relais UV lorsque la température de jonction atteint le seuil configuré.
@@ -66,6 +66,16 @@ Les données communes sont déclarées dans [globals.h](globals.h) et la configu
 
 - Arduino AVR core, avec la cible Arduino Duemilanove (`arduino:avr:diecimila`).
 - Bibliothèque `BitBang_LiquidCrystal_I2C` pour l'écran LCD.
+
+## Compilation
+
+Depuis le dossier du projet, la commande suivante compile le sketch avec le compilateur embarqué dans l'IDE Arduino sous Windows :
+
+```powershell
+& "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" compile --fqbn arduino:avr:diecimila .
+```
+
+La variable globale `servoSweepIntervalMs` règle l'intervalle entre deux pas du balayage. Sa valeur par défaut est `40UL` ms : l'augmenter ralentit le mouvement, la diminuer l'accélère.
 
 ## État du projet
 

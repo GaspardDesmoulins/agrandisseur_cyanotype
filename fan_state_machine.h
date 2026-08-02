@@ -12,6 +12,7 @@ enum FanState {
 
 struct FanMachine {
   FanState state;
+  unsigned long lastUvActiveMs;
   bool needsOutput;
 };
 
