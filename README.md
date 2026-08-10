@@ -75,6 +75,9 @@ Depuis le dossier du projet, la commande suivante compile le sketch avec le comp
 & "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" compile --fqbn arduino:avr:diecimila .
 ```
 
+Le dossier contenant les exécutables Arduino peut également être trouvé à l'emplacement:
+"D:\Program Files (x86)\Arduino\Arduino IDE\"
+
 La variable globale `servoSweepIntervalMs` règle l'intervalle entre deux pas du balayage. Sa valeur par défaut est `40UL` ms : l'augmenter ralentit le mouvement, la diminuer l'accélère.
 
 ## État du projet

@@ -3,7 +3,7 @@
 constexpr int SERVO_PAN_NEUTRAL_DEG = 100;
 constexpr int SERVO_TILT_NEUTRAL_DEG = 86;
 constexpr int SERVO_SWEEP_STEP_DEG = 1;
-#define SERVO_PAN_ANGLE_MULTIPLIER 6.0f
+#define SERVO_PAN_ANGLE_MULTIPLIER 4.0f
 constexpr int SERVO_PAN_MAX_OFFSET_DEG = 60;
 constexpr int SERVO_MIN_DEG = 0;
 constexpr int SERVO_MAX_DEG = 180;
