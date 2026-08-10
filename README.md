@@ -23,9 +23,9 @@ Les premières pages donnent accès à l'exposition, sa durée et au mode servo.
 
 1. `SWEEP` : rayon et vitesse du balayage.
 2. `MANUEL` : angles panoramique et inclinaison.
-3. `PRESET` : choix d'un des trois slots et enregistrement de la dernière position manuelle.
+3. `PRESET` : choix d'un des cinq slots, affichage de ses angles `Pan`/`Tilt`, et enregistrement de la dernière position manuelle.
 
-La température maximale de jonction reste accessible sur la dernière page. Les préréglages sont conservés en RAM jusqu'au redémarrage ; une persistance EEPROM pourra être ajoutée sans modifier l'interface du menu.
+La température maximale de jonction reste accessible sur la dernière page. Les cinq préréglages sont enregistrés dans l'EEPROM interne lors de l'action `Sauver preset` et sont donc conservés après extinction. Une signature et une version permettent de réinitialiser automatiquement cette zone lors de la première utilisation ou après un changement de format.
 
 ## Câblage actuellement défini
 

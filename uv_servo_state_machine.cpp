@@ -1,7 +1,18 @@
 #include "uv_servo_state_machine.h"
+#include <EEPROM.h>
 
 namespace
 {
+	constexpr uint16_t SERVO_PRESET_STORAGE_MAGIC = 0x4359;
+	constexpr uint8_t SERVO_PRESET_STORAGE_VERSION = 1;
+	constexpr int SERVO_PRESET_EEPROM_ADDRESS = 0;
+
+	struct StoredServoPresets
+	{
+		uint16_t magic;
+		uint8_t version;
+		UvServoPosition presets[SERVO_PRESET_COUNT];
+	};
 
 	int clampPanAngle(int angle)
 	{
@@ -11,6 +22,52 @@ namespace
 	int clampTiltAngle(int angle)
 	{
 		return constrain(angle, SERVO_TILT_MIN_DEG, SERVO_TILT_MAX_DEG);
+	}
+
+	bool isValidPresetPosition(const UvServoPosition &position)
+	{
+		return position.panAngle >= SERVO_PAN_MIN_DEG && position.panAngle <= SERVO_PAN_MAX_DEG && position.tiltAngle >= SERVO_TILT_MIN_DEG && position.tiltAngle <= SERVO_TILT_MAX_DEG;
+	}
+
+	void savePresetsToEeprom(const UvServoMachine &machine)
+	{
+		StoredServoPresets storedPresets;
+		storedPresets.magic = SERVO_PRESET_STORAGE_MAGIC;
+		storedPresets.version = SERVO_PRESET_STORAGE_VERSION;
+		for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
+		{
+			storedPresets.presets[presetIndex] = machine.presets[presetIndex];
+		}
+
+		EEPROM.put(SERVO_PRESET_EEPROM_ADDRESS, storedPresets);
+	}
+
+	void loadPresetsFromEeprom(UvServoMachine &machine)
+	{
+		StoredServoPresets storedPresets;
+		EEPROM.get(SERVO_PRESET_EEPROM_ADDRESS, storedPresets);
+
+		const bool storageIsCurrent = storedPresets.magic == SERVO_PRESET_STORAGE_MAGIC && storedPresets.version == SERVO_PRESET_STORAGE_VERSION;
+		bool saveDefaults = !storageIsCurrent;
+
+		for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
+		{
+			const UvServoPosition defaultPosition = {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG};
+			if (storageIsCurrent && isValidPresetPosition(storedPresets.presets[presetIndex]))
+			{
+				machine.presets[presetIndex] = storedPresets.presets[presetIndex];
+			}
+			else
+			{
+				machine.presets[presetIndex] = defaultPosition;
+				saveDefaults = true;
+			}
+		}
+
+		if (saveDefaults)
+		{
+			savePresetsToEeprom(machine);
+		}
 	}
 
 }
@@ -79,6 +136,7 @@ void uvServoSelectPreset(UvServoMachine &machine, int direction)
 void uvServoSaveManualPositionToPreset(UvServoMachine &machine)
 {
 	machine.presets[machine.selectedPreset] = machine.manualPosition;
+	savePresetsToEeprom(machine);
 }
 
 void uvServoInit(UvServoMachine &machine)
@@ -91,10 +149,7 @@ void uvServoInit(UvServoMachine &machine)
 	machine.sweepPhaseDeg = 0;
 	machine.sweepIntervalMs = DEFAULT_SERVO_SWEEP_INTERVAL_MS;
 	machine.manualPosition = {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG};
-	for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
-	{
-		machine.presets[presetIndex] = machine.manualPosition;
-	}
+	loadPresetsFromEeprom(machine);
 	machine.selectedPreset = 0;
 	machine.lastSweepMs = millis();
 	machine.pwmEnabled = false;

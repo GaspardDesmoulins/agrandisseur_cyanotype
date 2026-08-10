@@ -115,37 +115,58 @@ namespace
 		switch (item)
 		{
 		case MENU_ITEM_EXPOSURE_ACTION:
+		{
 			snprintf(line, sizeof(line), "%cExposition:%s", cursor, exposureActive ? "PAUSE" : "START");
 			break;
+		}
 		case MENU_ITEM_EXPOSURE_DURATION:
+		{
 			char remainingTime[6];
 			formatRemainingTime(remainingTime, sizeof(remainingTime));
 			snprintf(line, sizeof(line), "%cDuree:%s", cursor, remainingTime);
 			break;
+		}
 		case MENU_ITEM_SERVO_MODE:
+		{
 			snprintf(line, sizeof(line), "%cMode:%s", cursor, uvServoModeLabel(uvServoMachine.exposureMode));
 			break;
+		}
 		case MENU_ITEM_SWEEP_RADIUS:
+		{
 			snprintf(line, sizeof(line), "%cRayon:%d deg", cursor, uvServoMachine.sweepRadiusDeg);
 			break;
+		}
 		case MENU_ITEM_SWEEP_INTERVAL:
+		{
 			snprintf(line, sizeof(line), "%cVitesse:%lu ms", cursor, uvServoMachine.sweepIntervalMs);
 			break;
+		}
 		case MENU_ITEM_MANUAL_PAN:
+		{
 			snprintf(line, sizeof(line), "%cPan:%d deg", cursor, uvServoMachine.manualPosition.panAngle);
 			break;
+		}
 		case MENU_ITEM_MANUAL_TILT:
+		{
 			snprintf(line, sizeof(line), "%cTilt:%d deg", cursor, uvServoMachine.manualPosition.tiltAngle);
 			break;
+		}
 		case MENU_ITEM_PRESET_INDEX:
-			snprintf(line, sizeof(line), "%cPreset:%u/%u", cursor, uvServoMachine.selectedPreset + 1, SERVO_PRESET_COUNT);
+		{
+			const UvServoPosition &preset = uvServoMachine.presets[uvServoMachine.selectedPreset];
+			snprintf(line, sizeof(line), "%cPreset:%u/%u P%dT%d", cursor, uvServoMachine.selectedPreset + 1, SERVO_PRESET_COUNT, preset.panAngle, preset.tiltAngle);
 			break;
+		}
 		case MENU_ITEM_SAVE_PRESET:
+		{
 			snprintf(line, sizeof(line), "%cSauver P%u:%d/%d", cursor, uvServoMachine.selectedPreset + 1, uvServoMachine.manualPosition.panAngle, uvServoMachine.manualPosition.tiltAngle);
 			break;
+		}
 		case MENU_ITEM_MAX_TEMPERATURE:
+		{
 			snprintf(line, sizeof(line), "%cTmax:%d C", cursor, static_cast<int>(maxJunctionTempC));
 			break;
+		}
 		}
 
 		setDisplayLine(machine, row, line);
@@ -169,9 +190,33 @@ namespace
 		}
 		setDisplayLine(machine, 1, line);
 
-		const uint8_t firstItemIndex = machine.currentPage * MENU_ITEMS_PER_PAGE;
-		renderMenuItem(machine, 2, menuItemForIndex(firstItemIndex), machine.selectedItem == firstItemIndex, machine.state == MENU_EDIT);
-		renderMenuItem(machine, 3, menuItemForIndex(firstItemIndex + 1), machine.selectedItem == firstItemIndex + 1, machine.state == MENU_EDIT);
+		const uint8_t pageIndex = machine.selectedItem / MENU_ITEMS_PER_PAGE;
+		const bool editing = machine.state == MENU_EDIT;
+		if (pageIndex == 0)
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_EXPOSURE_ACTION, machine.selectedItem == 0, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_EXPOSURE_DURATION, machine.selectedItem == 1, editing);
+		}
+		else if (pageIndex == 1)
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_SERVO_MODE, machine.selectedItem == 2, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_MAX_TEMPERATURE, machine.selectedItem == 3, editing);
+		}
+		else if (uvServoMachine.exposureMode == SERVO_MODE_SWEEP)
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_SWEEP_RADIUS, machine.selectedItem == 4, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_SWEEP_INTERVAL, machine.selectedItem == 5, editing);
+		}
+		else if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_MANUAL_PAN, machine.selectedItem == 4, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_MANUAL_TILT, machine.selectedItem == 5, editing);
+		}
+		else
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 4, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 5, editing);
+		}
 	}
 
 	void outputNextChangedCharacter(MenuMachine &machine)
@@ -183,7 +228,7 @@ namespace
 				if (machine.displayTarget[row][column] != machine.displayRendered[row][column])
 				{
 					lcd.setCursor(column, row);
-					lcd.print(machine.displayTarget[row][column]);
+					lcd.write(machine.displayTarget[row][column]);
 					machine.displayRendered[row][column] = machine.displayTarget[row][column];
 					return;
 				}

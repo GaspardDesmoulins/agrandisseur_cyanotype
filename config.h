@@ -57,6 +57,6 @@ constexpr unsigned long DEFAULT_SERVO_SWEEP_INTERVAL_MS = 40UL;
 constexpr unsigned long MIN_SERVO_SWEEP_INTERVAL_MS = 10UL;
 constexpr unsigned long MAX_SERVO_SWEEP_INTERVAL_MS = 500UL;
 constexpr unsigned long SERVO_SWEEP_INTERVAL_STEP_MS = 10UL;
-constexpr uint8_t SERVO_PRESET_COUNT = 3;
+constexpr uint8_t SERVO_PRESET_COUNT = 5;
 
 #endif

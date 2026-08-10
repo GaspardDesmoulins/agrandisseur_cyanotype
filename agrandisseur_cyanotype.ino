@@ -17,42 +17,44 @@ UvServoMachine uvServoMachine;
 ExposureMachine exposureMachine;
 TemperatureMachine temperatureMachine;
 
-void setup() {
-  pinMode(PIN_SM_ENCODER_CLK, INPUT_PULLUP);
-  pinMode(PIN_SM_ENCODER_DT, INPUT_PULLUP);
-  pinMode(PIN_SM_ENCODER_SW, INPUT_PULLUP);
-  pinMode(PIN_SM_RELAY, OUTPUT);
-  pinMode(PIN_SM_FAN, OUTPUT);
+void setup()
+{
+	pinMode(PIN_SM_ENCODER_CLK, INPUT_PULLUP);
+	pinMode(PIN_SM_ENCODER_DT, INPUT_PULLUP);
+	pinMode(PIN_SM_ENCODER_SW, INPUT_PULLUP);
+	pinMode(PIN_SM_RELAY, OUTPUT);
+	pinMode(PIN_SM_FAN, OUTPUT);
 
-  lcd.begin();
-  lcd.clear();
+	lcd.begin();
+	lcd.clear();
 
-  menuInit(menuMachine);
-  encoderInit(encoderMachine);
-  relayInit(relayMachine);
-  safetyInit(safetyMachine);
-  fanInit(fanMachine);
-  uvServoInit(uvServoMachine);
-  exposureInit(exposureMachine);
-  temperatureInit(temperatureMachine);
+	menuInit(menuMachine);
+	encoderInit(encoderMachine);
+	relayInit(relayMachine);
+	safetyInit(safetyMachine);
+	fanInit(fanMachine);
+	uvServoInit(uvServoMachine);
+	exposureInit(exposureMachine);
+	temperatureInit(temperatureMachine);
 }
 
-void loop() {
-  encoderUpdate(encoderMachine);
-  temperatureUpdate(temperatureMachine);
-  safetyUpdate(safetyMachine);
-  relayUpdate(relayMachine);
-  fanUpdate(fanMachine);
-  uvServoUpdate(uvServoMachine);
-  exposureUpdate(exposureMachine);
-  menuUpdate(menuMachine);
+void loop()
+{
+	encoderUpdate(encoderMachine);
+	temperatureUpdate(temperatureMachine);
+	safetyUpdate(safetyMachine);
+	relayUpdate(relayMachine);
+	fanUpdate(fanMachine);
+	uvServoUpdate(uvServoMachine);
+	exposureUpdate(exposureMachine);
+	menuUpdate(menuMachine);
 
-  encoderOutput(encoderMachine);
-  safetyOutput(safetyMachine);
-  relayOutput(relayMachine);
-  fanOutput(fanMachine);
-  uvServoOutput(uvServoMachine);
-  exposureOutput(exposureMachine);
-  temperatureOutput(temperatureMachine);
-  menuOutput(menuMachine);
+	encoderOutput(encoderMachine);
+	safetyOutput(safetyMachine);
+	relayOutput(relayMachine);
+	fanOutput(fanMachine);
+	uvServoOutput(uvServoMachine);
+	exposureOutput(exposureMachine);
+	temperatureOutput(temperatureMachine);
+	menuOutput(menuMachine);
 }
