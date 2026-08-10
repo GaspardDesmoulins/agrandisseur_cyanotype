@@ -16,9 +16,6 @@ unsigned long exposureDurationMs = 900000UL;
 unsigned long exposureElapsedMs = 0UL;
 bool exposureActive = false;
 float maxJunctionTempC = DEFAULT_MAX_JUNCTION_TEMP_C;
-int servoSweepRadiusDeg = 10;
-int servoSweepPhaseDeg = 0;
-unsigned long servoSweepIntervalMs = 40UL;
 int encoderRotationCount = 0;
 bool encoderButtonPressedEvent = false;
 

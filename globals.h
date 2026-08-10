@@ -22,16 +22,14 @@ extern unsigned long exposureDurationMs;
 extern unsigned long exposureElapsedMs;
 extern bool exposureActive;
 extern float maxJunctionTempC;
-extern int servoSweepRadiusDeg;
-extern int servoSweepPhaseDeg;
-extern unsigned long servoSweepIntervalMs;
 
-struct SystemState {
-  bool encoderChanged;
-  bool buttonChanged;
-  bool relayChanged;
-  bool fanChanged;
-  bool safetyChanged;
+struct SystemState
+{
+	bool encoderChanged;
+	bool buttonChanged;
+	bool relayChanged;
+	bool fanChanged;
+	bool safetyChanged;
 };
 
 extern SystemState systemState;

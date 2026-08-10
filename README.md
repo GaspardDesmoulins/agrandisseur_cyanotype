@@ -8,23 +8,24 @@ Le firmware pilote l'exposition UV, son balayage mécanique, le refroidissement 
 
 - Pilotage d'un projecteur UV par relais.
 - Minuterie d'exposition réglable de 5 secondes à 60 minutes, initialisée à 15 minutes. Le réglage progresse par pas de 5 secondes sous une minute, de 30 secondes entre 1 et 5 minutes, de 2 minutes entre 5 et 15 minutes, puis de 5 minutes au-delà.
-- Déplacement circulaire du projecteur avec deux servomoteurs (panoramique et inclinaison) pendant l'exposition pour répartir la lumière. Les PWM des servos sont coupés hors exposition.
+- Trois modes de positionnement du projecteur pendant l'exposition : balayage circulaire, angles panoramique/inclinaison manuels, ou position préréglée. Les PWM des servos sont coupés hors exposition.
 - Ventilation à trois niveaux : faible hors exposition, moyenne pendant l'exposition et maximale en cas de sécurité thermique.
 - Interface utilisateur avec encodeur rotatif KY-040 et écran LCD I2C de 20 x 4 caractères.
 - Coupure du relais UV lorsque la température de jonction atteint le seuil configuré.
 
 ## Utilisation de l'interface
 
-Un appui sur le bouton de l'encodeur bascule entre le mode sélection (`STBY`) et le mode édition (`EDIT`).
+Les lignes 0 et 1 affichent en permanence l'état et le temps restant de l'exposition, puis la température et l'état de sécurité. Les lignes 2 et 3 présentent une page de deux options.
 
-En mode sélection, la rotation choisit l'un des quatre éléments :
+En mode sélection, la rotation déplace le curseur et change automatiquement de page toutes les deux options. Un appui ouvre ou ferme le mode édition (`EDIT`) ; la rotation modifie alors la valeur sélectionnée. Les actions `Exposition` et `Sauver preset` s'exécutent directement par appui.
 
-1. État de l'exposition : démarrer ou mettre en pause la minuterie.
-2. Durée d'exposition restante.
-3. Rayon du balayage des servomoteurs.
-4. Température maximale de jonction.
+Les premières pages donnent accès à l'exposition, sa durée et au mode servo. Les options suivantes dépendent du mode choisi :
 
-En mode édition, la rotation modifie l'élément choisi. Le minuteur démarre ou se met en pause en tournant l'encodeur lorsque l'élément « État » est sélectionné.
+1. `SWEEP` : rayon et vitesse du balayage.
+2. `MANUEL` : angles panoramique et inclinaison.
+3. `PRESET` : choix d'un des trois slots et enregistrement de la dernière position manuelle.
+
+La température maximale de jonction reste accessible sur la dernière page. Les préréglages sont conservés en RAM jusqu'au redémarrage ; une persistance EEPROM pourra être ajoutée sans modifier l'interface du menu.
 
 ## Câblage actuellement défini
 
@@ -78,7 +79,7 @@ Depuis le dossier du projet, la commande suivante compile le sketch avec le comp
 Le dossier contenant les exécutables Arduino peut également être trouvé à l'emplacement:
 "D:\Program Files (x86)\Arduino\Arduino IDE\"
 
-La variable globale `servoSweepIntervalMs` règle l'intervalle entre deux pas du balayage. Sa valeur par défaut est `40UL` ms : l'augmenter ralentit le mouvement, la diminuer l'accélère.
+Les limites mécaniques, valeurs par défaut du balayage et nombre de préréglages sont regroupés dans [config.h](config.h). La vitesse du balayage est réglable de 10 à 500 ms par pas de 10 ms.
 
 ## État du projet
 
