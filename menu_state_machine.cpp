@@ -43,42 +43,46 @@ namespace
 		{
 			return MENU_ITEM_SERVO_MODE;
 		}
+		if (index == 3)
+		{
+			return MENU_ITEM_MAX_TEMPERATURE;
+		}
 
 		if (uvServoMachine.exposureMode == SERVO_MODE_SWEEP)
 		{
-			if (index == 3)
+			if (index == 4)
 			{
 				return MENU_ITEM_SWEEP_RADIUS;
 			}
-			if (index == 4)
+			if (index == 5)
 			{
 				return MENU_ITEM_SWEEP_INTERVAL;
 			}
 		}
 		else if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
 		{
-			if (index == 3)
+			if (index == 4)
 			{
 				return MENU_ITEM_MANUAL_PAN;
 			}
-			if (index == 4)
+			if (index == 5)
 			{
 				return MENU_ITEM_MANUAL_TILT;
 			}
 		}
 		else
 		{
-			if (index == 3)
+			if (index == 4)
 			{
 				return MENU_ITEM_PRESET_INDEX;
 			}
-			if (index == 4)
+			if (index == 5)
 			{
 				return MENU_ITEM_SAVE_PRESET;
 			}
 		}
 
-		return MENU_ITEM_MAX_TEMPERATURE;
+		return MENU_ITEM_EXPOSURE_ACTION;
 	}
 
 	void setDisplayLine(MenuMachine &machine, uint8_t row, const char *text)
