@@ -184,7 +184,7 @@ namespace
 		}
 		case MENU_ITEM_SAVE_PRESET:
 		{
-			snprintf(line, sizeof(line), "%cSauver P%u %us", cursor, uvServoMachine.selectedPreset + 1, uvServoMachine.presets[uvServoMachine.selectedPreset].durationSeconds);
+			snprintf(line, sizeof(line), "%cSauver P%u", cursor, uvServoMachine.selectedPreset + 1);
 			break;
 		}
 		case MENU_ITEM_MAX_TEMPERATURE:
@@ -250,7 +250,8 @@ namespace
 		else
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 6, editing);
-			setDisplayLine(machine, 3, "");
+			snprintf(line, sizeof(line), "P:%d T:%d %us", uvServoMachine.manualPosition.panAngle, uvServoMachine.manualPosition.tiltAngle, uvServoMachine.presets[uvServoMachine.selectedPreset].durationSeconds);
+			setDisplayLine(machine, 3, line);
 		}
 	}
 
