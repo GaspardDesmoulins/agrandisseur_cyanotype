@@ -15,8 +15,9 @@ namespace
 		MENU_ITEM_EXPOSURE_ACTION,
 		MENU_ITEM_EXPOSURE_DURATION,
 		MENU_ITEM_SERVO_MODE,
-		MENU_ITEM_SWEEP_RADIUS,
-		MENU_ITEM_SWEEP_INTERVAL,
+		MENU_ITEM_ELLIPSE_PAN_MAX,
+		MENU_ITEM_ELLIPSE_TILT_MAX,
+		MENU_ITEM_ELLIPSE_INTERVAL,
 		MENU_ITEM_MANUAL_PAN,
 		MENU_ITEM_MANUAL_TILT,
 		MENU_ITEM_PRESET_INDEX,
@@ -26,7 +27,7 @@ namespace
 
 	uint8_t menuItemCount()
 	{
-		return 6;
+		return uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE ? 7 : 6;
 	}
 
 	MenuItem menuItemForIndex(uint8_t index)
@@ -48,15 +49,19 @@ namespace
 			return MENU_ITEM_MAX_TEMPERATURE;
 		}
 
-		if (uvServoMachine.exposureMode == SERVO_MODE_SWEEP)
+		if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
 		{
 			if (index == 4)
 			{
-				return MENU_ITEM_SWEEP_RADIUS;
+				return MENU_ITEM_ELLIPSE_PAN_MAX;
 			}
 			if (index == 5)
 			{
-				return MENU_ITEM_SWEEP_INTERVAL;
+				return MENU_ITEM_ELLIPSE_TILT_MAX;
+			}
+			if (index == 6)
+			{
+				return MENU_ITEM_ELLIPSE_INTERVAL;
 			}
 		}
 		else if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
@@ -131,14 +136,19 @@ namespace
 			snprintf(line, sizeof(line), "%cMode:%s", cursor, uvServoModeLabel(uvServoMachine.exposureMode));
 			break;
 		}
-		case MENU_ITEM_SWEEP_RADIUS:
+		case MENU_ITEM_ELLIPSE_PAN_MAX:
 		{
-			snprintf(line, sizeof(line), "%cRayon:%d deg", cursor, uvServoMachine.sweepRadiusDeg);
+			snprintf(line, sizeof(line), "%cPan max:%d deg", cursor, uvServoMachine.ellipsePanMaxAngleDeg);
 			break;
 		}
-		case MENU_ITEM_SWEEP_INTERVAL:
+		case MENU_ITEM_ELLIPSE_TILT_MAX:
 		{
-			snprintf(line, sizeof(line), "%cVitesse:%lu ms", cursor, uvServoMachine.sweepIntervalMs);
+			snprintf(line, sizeof(line), "%cTilt max:%d deg", cursor, uvServoMachine.ellipseTiltMaxAngleDeg);
+			break;
+		}
+		case MENU_ITEM_ELLIPSE_INTERVAL:
+		{
+			snprintf(line, sizeof(line), "%cVitesse:%lu ms", cursor, uvServoMachine.ellipseIntervalMs);
 			break;
 		}
 		case MENU_ITEM_MANUAL_PAN:
@@ -202,20 +212,25 @@ namespace
 			renderMenuItem(machine, 2, MENU_ITEM_SERVO_MODE, machine.selectedItem == 2, editing);
 			renderMenuItem(machine, 3, MENU_ITEM_MAX_TEMPERATURE, machine.selectedItem == 3, editing);
 		}
-		else if (uvServoMachine.exposureMode == SERVO_MODE_SWEEP)
+		else if (pageIndex == 2 && uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
 		{
-			renderMenuItem(machine, 2, MENU_ITEM_SWEEP_RADIUS, machine.selectedItem == 4, editing);
-			renderMenuItem(machine, 3, MENU_ITEM_SWEEP_INTERVAL, machine.selectedItem == 5, editing);
+			renderMenuItem(machine, 2, MENU_ITEM_ELLIPSE_PAN_MAX, machine.selectedItem == 4, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_ELLIPSE_TILT_MAX, machine.selectedItem == 5, editing);
 		}
-		else if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
+		else if (pageIndex == 2 && uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_MANUAL_PAN, machine.selectedItem == 4, editing);
 			renderMenuItem(machine, 3, MENU_ITEM_MANUAL_TILT, machine.selectedItem == 5, editing);
 		}
-		else
+		else if (pageIndex == 2)
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 4, editing);
 			renderMenuItem(machine, 3, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 5, editing);
+		}
+		else
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_ELLIPSE_INTERVAL, machine.selectedItem == 6, editing);
+			setDisplayLine(machine, 3, "");
 		}
 	}
 
@@ -265,11 +280,14 @@ namespace
 		case MENU_ITEM_SERVO_MODE:
 			uvServoChangeMode(uvServoMachine, direction);
 			break;
-		case MENU_ITEM_SWEEP_RADIUS:
-			uvServoAdjustSweepRadius(uvServoMachine, direction);
+		case MENU_ITEM_ELLIPSE_PAN_MAX:
+			uvServoAdjustEllipsePanMaxAngle(uvServoMachine, direction);
 			break;
-		case MENU_ITEM_SWEEP_INTERVAL:
-			uvServoAdjustSweepInterval(uvServoMachine, direction);
+		case MENU_ITEM_ELLIPSE_TILT_MAX:
+			uvServoAdjustEllipseTiltMaxAngle(uvServoMachine, direction);
+			break;
+		case MENU_ITEM_ELLIPSE_INTERVAL:
+			uvServoAdjustEllipseInterval(uvServoMachine, direction);
 			break;
 		case MENU_ITEM_MANUAL_PAN:
 			uvServoAdjustManualPan(uvServoMachine, direction);

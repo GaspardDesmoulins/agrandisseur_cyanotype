@@ -6,7 +6,7 @@
 
 enum ServoExposureMode
 {
-	SERVO_MODE_SWEEP,
+	SERVO_MODE_ELLIPSE,
 	SERVO_MODE_MANUAL,
 	SERVO_MODE_PRESET
 };
@@ -34,13 +34,14 @@ struct UvServoMachine
 	int panAngle;
 	int tiltAngle;
 	ServoExposureMode exposureMode;
-	int sweepRadiusDeg;
-	int sweepPhaseDeg;
-	unsigned long sweepIntervalMs;
+	int ellipsePanMaxAngleDeg;
+	int ellipseTiltMaxAngleDeg;
+	int ellipsePhaseDeg;
+	unsigned long ellipseIntervalMs;
 	UvServoPosition manualPosition;
 	UvServoPosition presets[SERVO_PRESET_COUNT];
 	uint8_t selectedPreset;
-	unsigned long lastSweepMs;
+	unsigned long lastEllipseMs;
 	bool pwmEnabled;
 	bool needsOutput;
 };
@@ -48,11 +49,13 @@ struct UvServoMachine
 void uvServoInit(UvServoMachine &machine);
 void uvServoUpdate(UvServoMachine &machine);
 void uvServoOutput(UvServoMachine &machine);
-int uvServoMaxSweepRadiusDeg();
+int uvServoMaxPanOffsetDeg();
+int uvServoMaxTiltOffsetDeg();
 const char *uvServoModeLabel(ServoExposureMode mode);
 void uvServoChangeMode(UvServoMachine &machine, int direction);
-void uvServoAdjustSweepRadius(UvServoMachine &machine, int direction);
-void uvServoAdjustSweepInterval(UvServoMachine &machine, int direction);
+void uvServoAdjustEllipsePanMaxAngle(UvServoMachine &machine, int direction);
+void uvServoAdjustEllipseTiltMaxAngle(UvServoMachine &machine, int direction);
+void uvServoAdjustEllipseInterval(UvServoMachine &machine, int direction);
 void uvServoAdjustManualPan(UvServoMachine &machine, int direction);
 void uvServoAdjustManualTilt(UvServoMachine &machine, int direction);
 void uvServoSelectPreset(UvServoMachine &machine, int direction);

@@ -8,7 +8,7 @@ Le firmware pilote l'exposition UV, son balayage mécanique, le refroidissement 
 
 - Pilotage d'un projecteur UV par relais.
 - Minuterie d'exposition réglable de 5 secondes à 60 minutes, initialisée à 15 minutes. Le réglage progresse par pas de 5 secondes sous une minute, de 30 secondes entre 1 et 5 minutes, de 2 minutes entre 5 et 15 minutes, puis de 5 minutes au-delà.
-- Trois modes de positionnement du projecteur pendant l'exposition : balayage circulaire, angles panoramique/inclinaison manuels, ou position préréglée. Les PWM des servos sont coupés hors exposition.
+- Trois modes de positionnement du projecteur pendant l'exposition : ellipse réglable, angles panoramique/inclinaison manuels, ou position préréglée. Les PWM des servos sont coupés hors exposition.
 - Ventilation à trois niveaux : faible hors exposition, moyenne pendant l'exposition et maximale en cas de sécurité thermique.
 - Interface utilisateur avec encodeur rotatif KY-040 et écran LCD I2C de 20 x 4 caractères.
 - Coupure du relais UV lorsque la température de jonction atteint le seuil configuré.
@@ -21,7 +21,7 @@ En mode sélection, la rotation déplace le curseur et change automatiquement de
 
 Les premières pages donnent accès à l'exposition, sa durée et au mode servo. Les options suivantes dépendent du mode choisi :
 
-1. `SWEEP` : rayon et vitesse du balayage.
+1. `ELLIPSE` : amplitudes maximales `Pan` et `Tilt`, puis vitesse du mouvement.
 2. `MANUEL` : angles panoramique et inclinaison.
 3. `PRESET` : choix d'un des cinq slots, affichage de ses angles `Pan`/`Tilt`, et enregistrement de la dernière position manuelle.
 
@@ -57,7 +57,7 @@ Le sketch principal est [agrandisseur_cyanotype.ino](agrandisseur_cyanotype.ino)
 - [exposure_state_machine.cpp](exposure_state_machine.cpp) gère le minuteur et les demandes d'exposition.
 - [relay_state_machine.cpp](relay_state_machine.cpp) commande le relais UV.
 - [fan_state_machine.cpp](fan_state_machine.cpp) ajuste la ventilation.
-- [uv_servo_state_machine.cpp](uv_servo_state_machine.cpp) pilote le balayage du projecteur.
+- [uv_servo_state_machine.cpp](uv_servo_state_machine.cpp) pilote le mouvement elliptique du projecteur.
 - [temperature_state_machine.cpp](temperature_state_machine.cpp) relève le thermocouple via la MAX6675 toutes les 250 ms.
 - [safety_state_machine.cpp](safety_state_machine.cpp) publie l'état de sécurité thermique.
 
@@ -79,7 +79,7 @@ Depuis le dossier du projet, la commande suivante compile le sketch avec le comp
 Le dossier contenant les exécutables Arduino peut également être trouvé à l'emplacement:
 "D:\Program Files (x86)\Arduino\Arduino IDE\"
 
-Les limites mécaniques, valeurs par défaut du balayage et nombre de préréglages sont regroupés dans [config.h](config.h). La vitesse du balayage est réglable de 10 à 500 ms par pas de 10 ms.
+Les limites mécaniques, valeurs par défaut de l'ellipse et nombre de préréglages sont regroupés dans [config.h](config.h). La vitesse de l'ellipse est réglable de 10 à 500 ms par pas de 10 ms.
 
 ## État du projet
 

@@ -48,15 +48,15 @@ constexpr int SERVO_PAN_NEUTRAL_DEG = 100;
 constexpr int SERVO_TILT_NEUTRAL_DEG = 86;
 constexpr int SERVO_PAN_MIN_DEG = 40;
 constexpr int SERVO_PAN_MAX_DEG = 160;
-constexpr int SERVO_TILT_MIN_DEG = 0;
-constexpr int SERVO_TILT_MAX_DEG = 180;
-constexpr float SERVO_PAN_ANGLE_MULTIPLIER = 4.0f;
-constexpr int SERVO_SWEEP_STEP_DEG = 1;
-constexpr int DEFAULT_SERVO_SWEEP_RADIUS_DEG = 10;
-constexpr unsigned long DEFAULT_SERVO_SWEEP_INTERVAL_MS = 40UL;
-constexpr unsigned long MIN_SERVO_SWEEP_INTERVAL_MS = 10UL;
-constexpr unsigned long MAX_SERVO_SWEEP_INTERVAL_MS = 500UL;
-constexpr unsigned long SERVO_SWEEP_INTERVAL_STEP_MS = 10UL;
+constexpr int SERVO_TILT_MIN_DEG = 60;
+constexpr int SERVO_TILT_MAX_DEG = 115;
+constexpr int DEFAULT_SERVO_PAN_MAX_ANGLE_DEG = 50;
+constexpr int DEFAULT_SERVO_TILT_MAX_ANGLE_DEG = 20;
+constexpr int SERVO_ELLIPSE_STEP_DEG = 1;
+constexpr unsigned long DEFAULT_SERVO_ELLIPSE_INTERVAL_MS = 40UL;
+constexpr unsigned long MIN_SERVO_ELLIPSE_INTERVAL_MS = 10UL;
+constexpr unsigned long MAX_SERVO_ELLIPSE_INTERVAL_MS = 500UL;
+constexpr unsigned long SERVO_ELLIPSE_INTERVAL_STEP_MS = 10UL;
 constexpr uint8_t SERVO_PRESET_COUNT = 5;
 
 #endif

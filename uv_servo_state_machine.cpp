@@ -72,16 +72,18 @@ namespace
 
 }
 
-int uvServoMaxSweepRadiusDeg()
+int uvServoMaxPanOffsetDeg()
 {
 	const int panNegativeMarginDeg = SERVO_PAN_NEUTRAL_DEG - SERVO_PAN_MIN_DEG;
 	const int panPositiveMarginDeg = SERVO_PAN_MAX_DEG - SERVO_PAN_NEUTRAL_DEG;
-	const int panMaxRadiusDeg = static_cast<int>(min(panNegativeMarginDeg, panPositiveMarginDeg) / SERVO_PAN_ANGLE_MULTIPLIER);
+	return min(panNegativeMarginDeg, panPositiveMarginDeg);
+}
+
+int uvServoMaxTiltOffsetDeg()
+{
 	const int tiltNegativeMarginDeg = SERVO_TILT_NEUTRAL_DEG - SERVO_TILT_MIN_DEG;
 	const int tiltPositiveMarginDeg = SERVO_TILT_MAX_DEG - SERVO_TILT_NEUTRAL_DEG;
-	const int tiltMaxRadiusDeg = min(tiltNegativeMarginDeg, tiltPositiveMarginDeg);
-
-	return min(panMaxRadiusDeg, tiltMaxRadiusDeg);
+	return min(tiltNegativeMarginDeg, tiltPositiveMarginDeg);
 }
 
 const char *uvServoModeLabel(ServoExposureMode mode)
@@ -92,9 +94,9 @@ const char *uvServoModeLabel(ServoExposureMode mode)
 		return "MANUEL";
 	case SERVO_MODE_PRESET:
 		return "PRESET";
-	case SERVO_MODE_SWEEP:
+	case SERVO_MODE_ELLIPSE:
 	default:
-		return "SWEEP";
+		return "ELLIPSE";
 	}
 }
 
@@ -103,18 +105,23 @@ void uvServoChangeMode(UvServoMachine &machine, int direction)
 	const int modeCount = 3;
 	const int nextMode = (static_cast<int>(machine.exposureMode) + direction + modeCount) % modeCount;
 	machine.exposureMode = static_cast<ServoExposureMode>(nextMode);
-	machine.lastSweepMs = millis();
+	machine.lastEllipseMs = millis();
 }
 
-void uvServoAdjustSweepRadius(UvServoMachine &machine, int direction)
+void uvServoAdjustEllipsePanMaxAngle(UvServoMachine &machine, int direction)
 {
-	machine.sweepRadiusDeg = constrain(machine.sweepRadiusDeg + direction, 1, uvServoMaxSweepRadiusDeg());
+	machine.ellipsePanMaxAngleDeg = constrain(machine.ellipsePanMaxAngleDeg + direction, 1, uvServoMaxPanOffsetDeg());
 }
 
-void uvServoAdjustSweepInterval(UvServoMachine &machine, int direction)
+void uvServoAdjustEllipseTiltMaxAngle(UvServoMachine &machine, int direction)
 {
-	const long adjustedIntervalMs = static_cast<long>(machine.sweepIntervalMs) + direction * static_cast<long>(SERVO_SWEEP_INTERVAL_STEP_MS);
-	machine.sweepIntervalMs = static_cast<unsigned long>(constrain(adjustedIntervalMs, static_cast<long>(MIN_SERVO_SWEEP_INTERVAL_MS), static_cast<long>(MAX_SERVO_SWEEP_INTERVAL_MS)));
+	machine.ellipseTiltMaxAngleDeg = constrain(machine.ellipseTiltMaxAngleDeg + direction, 1, uvServoMaxTiltOffsetDeg());
+}
+
+void uvServoAdjustEllipseInterval(UvServoMachine &machine, int direction)
+{
+	const long adjustedIntervalMs = static_cast<long>(machine.ellipseIntervalMs) + direction * static_cast<long>(SERVO_ELLIPSE_INTERVAL_STEP_MS);
+	machine.ellipseIntervalMs = static_cast<unsigned long>(constrain(adjustedIntervalMs, static_cast<long>(MIN_SERVO_ELLIPSE_INTERVAL_MS), static_cast<long>(MAX_SERVO_ELLIPSE_INTERVAL_MS)));
 }
 
 void uvServoAdjustManualPan(UvServoMachine &machine, int direction)
@@ -144,14 +151,15 @@ void uvServoInit(UvServoMachine &machine)
 	machine.state = UV_SERVO_CENTER;
 	machine.panAngle = SERVO_PAN_NEUTRAL_DEG;
 	machine.tiltAngle = SERVO_TILT_NEUTRAL_DEG;
-	machine.exposureMode = SERVO_MODE_SWEEP;
-	machine.sweepRadiusDeg = DEFAULT_SERVO_SWEEP_RADIUS_DEG;
-	machine.sweepPhaseDeg = 0;
-	machine.sweepIntervalMs = DEFAULT_SERVO_SWEEP_INTERVAL_MS;
+	machine.exposureMode = SERVO_MODE_ELLIPSE;
+	machine.ellipsePanMaxAngleDeg = DEFAULT_SERVO_PAN_MAX_ANGLE_DEG;
+	machine.ellipseTiltMaxAngleDeg = DEFAULT_SERVO_TILT_MAX_ANGLE_DEG;
+	machine.ellipsePhaseDeg = 0;
+	machine.ellipseIntervalMs = DEFAULT_SERVO_ELLIPSE_INTERVAL_MS;
 	machine.manualPosition = {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG};
 	loadPresetsFromEeprom(machine);
 	machine.selectedPreset = 0;
-	machine.lastSweepMs = millis();
+	machine.lastEllipseMs = millis();
 	machine.pwmEnabled = false;
 	machine.needsOutput = false;
 }
@@ -174,20 +182,20 @@ void uvServoUpdate(UvServoMachine &machine)
 		machine.panServo.attach(PIN_SM_SERVO_PAN);
 		machine.tiltServo.attach(PIN_SM_SERVO_TILT);
 		machine.pwmEnabled = true;
-		machine.lastSweepMs = now;
+		machine.lastEllipseMs = now;
 	}
-	else if (machine.exposureMode == SERVO_MODE_SWEEP && now - machine.lastSweepMs >= machine.sweepIntervalMs)
+	else if (machine.exposureMode == SERVO_MODE_ELLIPSE && now - machine.lastEllipseMs >= machine.ellipseIntervalMs)
 	{
-		machine.sweepPhaseDeg = (machine.sweepPhaseDeg + SERVO_SWEEP_STEP_DEG) % 360;
-		machine.lastSweepMs = now;
+		machine.ellipsePhaseDeg = (machine.ellipsePhaseDeg + SERVO_ELLIPSE_STEP_DEG) % 360;
+		machine.lastEllipseMs = now;
 	}
 
 	machine.state = UV_SERVO_CENTER;
-	if (machine.exposureMode == SERVO_MODE_SWEEP)
+	if (machine.exposureMode == SERVO_MODE_ELLIPSE)
 	{
-		const float angleRad = machine.sweepPhaseDeg * 0.0174532925f;
-		const int panOffset = static_cast<int>(sin(angleRad) * machine.sweepRadiusDeg * SERVO_PAN_ANGLE_MULTIPLIER);
-		const int tiltOffset = static_cast<int>(cos(angleRad) * machine.sweepRadiusDeg);
+		const float angleRad = machine.ellipsePhaseDeg * 0.0174532925f;
+		const int panOffset = static_cast<int>(sin(angleRad) * machine.ellipsePanMaxAngleDeg);
+		const int tiltOffset = static_cast<int>(cos(angleRad) * machine.ellipseTiltMaxAngleDeg);
 		machine.panAngle = clampPanAngle(SERVO_PAN_NEUTRAL_DEG + panOffset);
 		machine.tiltAngle = clampTiltAngle(SERVO_TILT_NEUTRAL_DEG + tiltOffset);
 	}
