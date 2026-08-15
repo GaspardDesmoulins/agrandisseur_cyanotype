@@ -8,7 +8,7 @@ Le firmware pilote l'exposition UV, son balayage mécanique, le refroidissement 
 
 - Pilotage d'un projecteur UV par relais.
 - Minuterie d'exposition réglable de 5 secondes à 60 minutes, initialisée à 15 minutes. Le réglage progresse par pas de 5 secondes sous une minute, de 30 secondes entre 1 et 5 minutes, de 2 minutes entre 5 et 15 minutes, puis de 5 minutes au-delà.
-- Trois modes de positionnement du projecteur pendant l'exposition : ellipse réglable, angles panoramique/inclinaison manuels, ou position préréglée. Les PWM des servos sont coupés hors exposition.
+- Quatre modes de positionnement du projecteur pendant l'exposition : ellipse réglable, angles panoramique/inclinaison manuels, position préréglée ou scénario de préréglages. Les PWM des servos sont coupés hors exposition.
 - Ventilation à trois niveaux : faible hors exposition, moyenne pendant l'exposition et maximale en cas de sécurité thermique.
 - Interface utilisateur avec encodeur rotatif KY-040 et écran LCD I2C de 20 x 4 caractères.
 - Coupure du relais UV lorsque la température de jonction atteint le seuil configuré.
@@ -23,9 +23,10 @@ Les premières pages donnent accès à l'exposition, sa durée et au mode servo.
 
 1. `ELLIPSE` : amplitudes maximales `Pan` et `Tilt`, puis vitesse du mouvement.
 2. `MANUEL` : angles panoramique et inclinaison.
-3. `PRESET` : choix d'un des cinq slots, affichage de ses angles `Pan`/`Tilt`, et enregistrement de la dernière position manuelle.
+3. `PRESET` : choix d'un des cinq slots, affichage de ses angles `Pan`/`Tilt`, réglage de sa durée en secondes et enregistrement de la dernière position manuelle avec sa durée.
+4. `SCENARIO` : lecture cyclique des cinq préréglages, en démarrant au premier lors de chaque exposition et en passant au suivant après sa durée sauvegardée.
 
-La température maximale de jonction reste accessible sur la dernière page. Les cinq préréglages sont enregistrés dans l'EEPROM interne lors de l'action `Sauver preset` et sont donc conservés après extinction. Une signature et une version permettent de réinitialiser automatiquement cette zone lors de la première utilisation ou après un changement de format.
+La température maximale de jonction reste accessible sur la dernière page. Les cinq préréglages et leurs durées sont enregistrés dans l'EEPROM interne lors de l'action `Sauver preset` et sont donc conservés après extinction. Une signature et une version permettent de réinitialiser automatiquement cette zone lors de la première utilisation ou après un changement de format.
 
 ## Câblage actuellement défini
 

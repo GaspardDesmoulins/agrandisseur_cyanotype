@@ -21,13 +21,19 @@ namespace
 		MENU_ITEM_MANUAL_PAN,
 		MENU_ITEM_MANUAL_TILT,
 		MENU_ITEM_PRESET_INDEX,
+		MENU_ITEM_PRESET_DURATION,
 		MENU_ITEM_SAVE_PRESET,
 		MENU_ITEM_MAX_TEMPERATURE
 	};
 
 	uint8_t menuItemCount()
 	{
-		return uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE ? 7 : 6;
+		if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE || uvServoMachine.exposureMode == SERVO_MODE_PRESET)
+		{
+			return 7;
+		}
+
+		return uvServoMachine.exposureMode == SERVO_MODE_MANUAL ? 6 : 4;
 	}
 
 	MenuItem menuItemForIndex(uint8_t index)
@@ -75,13 +81,17 @@ namespace
 				return MENU_ITEM_MANUAL_TILT;
 			}
 		}
-		else
+		else if (uvServoMachine.exposureMode == SERVO_MODE_PRESET)
 		{
 			if (index == 4)
 			{
 				return MENU_ITEM_PRESET_INDEX;
 			}
 			if (index == 5)
+			{
+				return MENU_ITEM_PRESET_DURATION;
+			}
+			if (index == 6)
 			{
 				return MENU_ITEM_SAVE_PRESET;
 			}
@@ -163,13 +173,18 @@ namespace
 		}
 		case MENU_ITEM_PRESET_INDEX:
 		{
-			const UvServoPosition &preset = uvServoMachine.presets[uvServoMachine.selectedPreset];
+			const UvServoPreset &preset = uvServoMachine.presets[uvServoMachine.selectedPreset];
 			snprintf(line, sizeof(line), "%cPreset:%u/%u P%dT%d", cursor, uvServoMachine.selectedPreset + 1, SERVO_PRESET_COUNT, preset.panAngle, preset.tiltAngle);
+			break;
+		}
+		case MENU_ITEM_PRESET_DURATION:
+		{
+			snprintf(line, sizeof(line), "%cDuree P%u:%us", cursor, uvServoMachine.selectedPreset + 1, uvServoMachine.presets[uvServoMachine.selectedPreset].durationSeconds);
 			break;
 		}
 		case MENU_ITEM_SAVE_PRESET:
 		{
-			snprintf(line, sizeof(line), "%cSauver P%u:%d/%d", cursor, uvServoMachine.selectedPreset + 1, uvServoMachine.manualPosition.panAngle, uvServoMachine.manualPosition.tiltAngle);
+			snprintf(line, sizeof(line), "%cSauver P%u %us", cursor, uvServoMachine.selectedPreset + 1, uvServoMachine.presets[uvServoMachine.selectedPreset].durationSeconds);
 			break;
 		}
 		case MENU_ITEM_MAX_TEMPERATURE:
@@ -225,11 +240,16 @@ namespace
 		else if (pageIndex == 2)
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 4, editing);
-			renderMenuItem(machine, 3, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 5, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_PRESET_DURATION, machine.selectedItem == 5, editing);
+		}
+		else if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
+		{
+			renderMenuItem(machine, 2, MENU_ITEM_ELLIPSE_INTERVAL, machine.selectedItem == 6, editing);
+			setDisplayLine(machine, 3, "");
 		}
 		else
 		{
-			renderMenuItem(machine, 2, MENU_ITEM_ELLIPSE_INTERVAL, machine.selectedItem == 6, editing);
+			renderMenuItem(machine, 2, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 6, editing);
 			setDisplayLine(machine, 3, "");
 		}
 	}
@@ -297,6 +317,9 @@ namespace
 			break;
 		case MENU_ITEM_PRESET_INDEX:
 			uvServoSelectPreset(uvServoMachine, direction);
+			break;
+		case MENU_ITEM_PRESET_DURATION:
+			uvServoAdjustPresetDuration(uvServoMachine, direction);
 			break;
 		case MENU_ITEM_MAX_TEMPERATURE:
 			maxJunctionTempC = constrain(maxJunctionTempC + (direction > 0 ? 1.0f : -1.0f), 30.0f, 90.0f);

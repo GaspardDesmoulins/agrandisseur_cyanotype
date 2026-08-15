@@ -4,10 +4,18 @@
 namespace
 {
 	constexpr uint16_t SERVO_PRESET_STORAGE_MAGIC = 0x4359;
-	constexpr uint8_t SERVO_PRESET_STORAGE_VERSION = 1;
+	constexpr uint8_t SERVO_PRESET_STORAGE_VERSION = 2;
+	constexpr uint8_t SERVO_PRESET_STORAGE_VERSION_1 = 1;
 	constexpr int SERVO_PRESET_EEPROM_ADDRESS = 0;
 
 	struct StoredServoPresets
+	{
+		uint16_t magic;
+		uint8_t version;
+		UvServoPreset presets[SERVO_PRESET_COUNT];
+	};
+
+	struct StoredServoPresetsV1
 	{
 		uint16_t magic;
 		uint8_t version;
@@ -29,6 +37,16 @@ namespace
 		return position.panAngle >= SERVO_PAN_MIN_DEG && position.panAngle <= SERVO_PAN_MAX_DEG && position.tiltAngle >= SERVO_TILT_MIN_DEG && position.tiltAngle <= SERVO_TILT_MAX_DEG;
 	}
 
+	bool isValidPreset(const UvServoPreset &preset)
+	{
+		return preset.panAngle >= SERVO_PAN_MIN_DEG && preset.panAngle <= SERVO_PAN_MAX_DEG && preset.tiltAngle >= SERVO_TILT_MIN_DEG && preset.tiltAngle <= SERVO_TILT_MAX_DEG && preset.durationSeconds >= MIN_SERVO_PRESET_DURATION_SECONDS && preset.durationSeconds <= MAX_SERVO_PRESET_DURATION_SECONDS;
+	}
+
+	UvServoPreset defaultPreset()
+	{
+		return {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG, DEFAULT_SERVO_PRESET_DURATION_SECONDS};
+	}
+
 	void savePresetsToEeprom(const UvServoMachine &machine)
 	{
 		StoredServoPresets storedPresets;
@@ -48,23 +66,41 @@ namespace
 		EEPROM.get(SERVO_PRESET_EEPROM_ADDRESS, storedPresets);
 
 		const bool storageIsCurrent = storedPresets.magic == SERVO_PRESET_STORAGE_MAGIC && storedPresets.version == SERVO_PRESET_STORAGE_VERSION;
-		bool saveDefaults = !storageIsCurrent;
-
-		for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
+		bool savePresets = !storageIsCurrent;
+		if (storageIsCurrent)
 		{
-			const UvServoPosition defaultPosition = {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG};
-			if (storageIsCurrent && isValidPresetPosition(storedPresets.presets[presetIndex]))
+			for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
 			{
-				machine.presets[presetIndex] = storedPresets.presets[presetIndex];
+				if (isValidPreset(storedPresets.presets[presetIndex]))
+				{
+					machine.presets[presetIndex] = storedPresets.presets[presetIndex];
+				}
+				else
+				{
+					machine.presets[presetIndex] = defaultPreset();
+					savePresets = true;
+				}
 			}
-			else
+		}
+		else
+		{
+			StoredServoPresetsV1 storedPresetsV1;
+			EEPROM.get(SERVO_PRESET_EEPROM_ADDRESS, storedPresetsV1);
+			const bool canMigrateV1 = storedPresetsV1.magic == SERVO_PRESET_STORAGE_MAGIC && storedPresetsV1.version == SERVO_PRESET_STORAGE_VERSION_1;
+			for (uint8_t presetIndex = 0; presetIndex < SERVO_PRESET_COUNT; ++presetIndex)
 			{
-				machine.presets[presetIndex] = defaultPosition;
-				saveDefaults = true;
+				if (canMigrateV1 && isValidPresetPosition(storedPresetsV1.presets[presetIndex]))
+				{
+					machine.presets[presetIndex] = {storedPresetsV1.presets[presetIndex].panAngle, storedPresetsV1.presets[presetIndex].tiltAngle, DEFAULT_SERVO_PRESET_DURATION_SECONDS};
+				}
+				else
+				{
+					machine.presets[presetIndex] = defaultPreset();
+				}
 			}
 		}
 
-		if (saveDefaults)
+		if (savePresets)
 		{
 			savePresetsToEeprom(machine);
 		}
@@ -94,6 +130,8 @@ const char *uvServoModeLabel(ServoExposureMode mode)
 		return "MANUEL";
 	case SERVO_MODE_PRESET:
 		return "PRESET";
+	case SERVO_MODE_SCENARIO:
+		return "SCENARIO";
 	case SERVO_MODE_ELLIPSE:
 	default:
 		return "ELLIPSE";
@@ -102,10 +140,15 @@ const char *uvServoModeLabel(ServoExposureMode mode)
 
 void uvServoChangeMode(UvServoMachine &machine, int direction)
 {
-	const int modeCount = 3;
+	const int modeCount = static_cast<int>(SERVO_MODE_COUNT);
 	const int nextMode = (static_cast<int>(machine.exposureMode) + direction + modeCount) % modeCount;
 	machine.exposureMode = static_cast<ServoExposureMode>(nextMode);
 	machine.lastEllipseMs = millis();
+	machine.lastScenarioMs = machine.lastEllipseMs;
+	if (machine.exposureMode == SERVO_MODE_SCENARIO)
+	{
+		machine.scenarioPreset = 0;
+	}
 }
 
 void uvServoAdjustEllipsePanMaxAngle(UvServoMachine &machine, int direction)
@@ -140,9 +183,17 @@ void uvServoSelectPreset(UvServoMachine &machine, int direction)
 	machine.selectedPreset = static_cast<uint8_t>(nextPreset);
 }
 
+void uvServoAdjustPresetDuration(UvServoMachine &machine, int direction)
+{
+	const long adjustedDurationSeconds = static_cast<long>(machine.presets[machine.selectedPreset].durationSeconds) + direction * static_cast<long>(SERVO_PRESET_DURATION_STEP_SECONDS);
+	machine.presets[machine.selectedPreset].durationSeconds = static_cast<uint16_t>(constrain(adjustedDurationSeconds, static_cast<long>(MIN_SERVO_PRESET_DURATION_SECONDS), static_cast<long>(MAX_SERVO_PRESET_DURATION_SECONDS)));
+}
+
 void uvServoSaveManualPositionToPreset(UvServoMachine &machine)
 {
-	machine.presets[machine.selectedPreset] = machine.manualPosition;
+	UvServoPreset &preset = machine.presets[machine.selectedPreset];
+	preset.panAngle = machine.manualPosition.panAngle;
+	preset.tiltAngle = machine.manualPosition.tiltAngle;
 	savePresetsToEeprom(machine);
 }
 
@@ -159,7 +210,9 @@ void uvServoInit(UvServoMachine &machine)
 	machine.manualPosition = {SERVO_PAN_NEUTRAL_DEG, SERVO_TILT_NEUTRAL_DEG};
 	loadPresetsFromEeprom(machine);
 	machine.selectedPreset = 0;
+	machine.scenarioPreset = 0;
 	machine.lastEllipseMs = millis();
+	machine.lastScenarioMs = machine.lastEllipseMs;
 	machine.pwmEnabled = false;
 	machine.needsOutput = false;
 }
@@ -183,11 +236,21 @@ void uvServoUpdate(UvServoMachine &machine)
 		machine.tiltServo.attach(PIN_SM_SERVO_TILT);
 		machine.pwmEnabled = true;
 		machine.lastEllipseMs = now;
+		machine.lastScenarioMs = now;
+		if (machine.exposureMode == SERVO_MODE_SCENARIO)
+		{
+			machine.scenarioPreset = 0;
+		}
 	}
 	else if (machine.exposureMode == SERVO_MODE_ELLIPSE && now - machine.lastEllipseMs >= machine.ellipseIntervalMs)
 	{
 		machine.ellipsePhaseDeg = (machine.ellipsePhaseDeg + SERVO_ELLIPSE_STEP_DEG) % 360;
 		machine.lastEllipseMs = now;
+	}
+	else if (machine.exposureMode == SERVO_MODE_SCENARIO && now - machine.lastScenarioMs >= static_cast<unsigned long>(machine.presets[machine.scenarioPreset].durationSeconds) * 1000UL)
+	{
+		machine.scenarioPreset = (machine.scenarioPreset + 1) % SERVO_PRESET_COUNT;
+		machine.lastScenarioMs = now;
 	}
 
 	machine.state = UV_SERVO_CENTER;
@@ -204,9 +267,15 @@ void uvServoUpdate(UvServoMachine &machine)
 		machine.panAngle = clampPanAngle(machine.manualPosition.panAngle);
 		machine.tiltAngle = clampTiltAngle(machine.manualPosition.tiltAngle);
 	}
+	else if (machine.exposureMode == SERVO_MODE_PRESET)
+	{
+		const UvServoPreset &preset = machine.presets[machine.selectedPreset];
+		machine.panAngle = clampPanAngle(preset.panAngle);
+		machine.tiltAngle = clampTiltAngle(preset.tiltAngle);
+	}
 	else
 	{
-		const UvServoPosition &preset = machine.presets[machine.selectedPreset];
+		const UvServoPreset &preset = machine.presets[machine.scenarioPreset];
 		machine.panAngle = clampPanAngle(preset.panAngle);
 		machine.tiltAngle = clampTiltAngle(preset.tiltAngle);
 	}

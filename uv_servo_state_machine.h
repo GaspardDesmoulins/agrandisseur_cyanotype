@@ -8,7 +8,9 @@ enum ServoExposureMode
 {
 	SERVO_MODE_ELLIPSE,
 	SERVO_MODE_MANUAL,
-	SERVO_MODE_PRESET
+	SERVO_MODE_PRESET,
+	SERVO_MODE_SCENARIO,
+	SERVO_MODE_COUNT
 };
 
 enum UvServoState
@@ -26,6 +28,13 @@ struct UvServoPosition
 	int tiltAngle;
 };
 
+struct UvServoPreset
+{
+	int panAngle;
+	int tiltAngle;
+	uint16_t durationSeconds;
+};
+
 struct UvServoMachine
 {
 	UvServoState state;
@@ -39,9 +48,11 @@ struct UvServoMachine
 	int ellipsePhaseDeg;
 	unsigned long ellipseIntervalMs;
 	UvServoPosition manualPosition;
-	UvServoPosition presets[SERVO_PRESET_COUNT];
+	UvServoPreset presets[SERVO_PRESET_COUNT];
 	uint8_t selectedPreset;
+	uint8_t scenarioPreset;
 	unsigned long lastEllipseMs;
+	unsigned long lastScenarioMs;
 	bool pwmEnabled;
 	bool needsOutput;
 };
@@ -59,6 +70,7 @@ void uvServoAdjustEllipseInterval(UvServoMachine &machine, int direction);
 void uvServoAdjustManualPan(UvServoMachine &machine, int direction);
 void uvServoAdjustManualTilt(UvServoMachine &machine, int direction);
 void uvServoSelectPreset(UvServoMachine &machine, int direction);
+void uvServoAdjustPresetDuration(UvServoMachine &machine, int direction);
 void uvServoSaveManualPositionToPreset(UvServoMachine &machine);
 
 #endif
