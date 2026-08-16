@@ -18,6 +18,7 @@ namespace
 		MENU_ITEM_ELLIPSE_PAN_MAX,
 		MENU_ITEM_ELLIPSE_TILT_MAX,
 		MENU_ITEM_ELLIPSE_INTERVAL,
+		MENU_ITEM_ELLIPSE_STATUS,
 		MENU_ITEM_MANUAL_PAN,
 		MENU_ITEM_MANUAL_TILT,
 		MENU_ITEM_PRESET_INDEX,
@@ -29,7 +30,12 @@ namespace
 
 	uint8_t menuItemCount()
 	{
-		if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE || uvServoMachine.exposureMode == SERVO_MODE_PRESET)
+		if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
+		{
+			return 8;
+		}
+
+		if (uvServoMachine.exposureMode == SERVO_MODE_PRESET)
 		{
 			return 7;
 		}
@@ -74,6 +80,10 @@ namespace
 			if (index == 6)
 			{
 				return MENU_ITEM_ELLIPSE_INTERVAL;
+			}
+			if (index == 7)
+			{
+				return MENU_ITEM_ELLIPSE_STATUS;
 			}
 		}
 		else if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
@@ -126,10 +136,18 @@ namespace
 	void formatRemainingTime(char *buffer, size_t bufferSize)
 	{
 		const unsigned long remainingMs = (exposureDurationMs > exposureElapsedMs) ? (exposureDurationMs - exposureElapsedMs) : 0UL;
-		const unsigned int remainingMinutes = remainingMs / 60000UL;
+		const unsigned int remainingHours = remainingMs / 3600000UL;
+		const unsigned int remainingMinutes = (remainingMs % 3600000UL) / 60000UL;
 		const unsigned int remainingSeconds = (remainingMs % 60000UL) / 1000UL;
 
-		snprintf(buffer, bufferSize, "%02u:%02u", remainingMinutes, remainingSeconds);
+		if (remainingHours > 0)
+		{
+			snprintf(buffer, bufferSize, "%02u:%02u:%02u", remainingHours, remainingMinutes, remainingSeconds);
+		}
+		else
+		{
+			snprintf(buffer, bufferSize, "%02u:%02u", remainingMinutes, remainingSeconds);
+		}
 	}
 
 	void formatScenarioRemainingTime(char *buffer, size_t bufferSize)
@@ -158,7 +176,7 @@ namespace
 		}
 		case MENU_ITEM_EXPOSURE_DURATION:
 		{
-			char remainingTime[6];
+			char remainingTime[9];
 			formatRemainingTime(remainingTime, sizeof(remainingTime));
 			snprintf(line, sizeof(line), "%cDuree:%s", cursor, remainingTime);
 			break;
@@ -222,7 +240,7 @@ namespace
 	void buildDisplayTarget(MenuMachine &machine)
 	{
 		char line[LCD_COLS + 1];
-		char remainingTime[6];
+		char remainingTime[9];
 		formatRemainingTime(remainingTime, sizeof(remainingTime));
 		if (exposureActive)
 		{
@@ -283,7 +301,9 @@ namespace
 		else if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_ELLIPSE_INTERVAL, machine.selectedItem == 6, editing);
-			setDisplayLine(machine, 3, "");
+			const char cursor = machine.selectedItem == 7 ? '>' : ' ';
+			snprintf(line, sizeof(line), "%cActuel P:%d T:%d", cursor, uvServoMachine.panAngle, uvServoMachine.tiltAngle);
+			setDisplayLine(machine, 3, line);
 		}
 		else
 		{
@@ -332,7 +352,7 @@ namespace
 				}
 
 				const long adjustedDurationMs = static_cast<long>(exposureDurationMs) + (direction > 0 ? static_cast<long>(adjustmentMs) : -static_cast<long>(adjustmentMs));
-				exposureDurationMs = constrain(adjustedDurationMs, 5000L, 3600000L);
+				exposureDurationMs = constrain(adjustedDurationMs, 5000L, static_cast<long>(MAX_EXPOSURE_DURATION_MS));
 				exposureElapsedMs = 0UL;
 			}
 			break;
@@ -347,6 +367,8 @@ namespace
 			break;
 		case MENU_ITEM_ELLIPSE_INTERVAL:
 			uvServoAdjustEllipseInterval(uvServoMachine, direction);
+			break;
+		case MENU_ITEM_ELLIPSE_STATUS:
 			break;
 		case MENU_ITEM_MANUAL_PAN:
 			uvServoAdjustManualPan(uvServoMachine, direction);
@@ -430,6 +452,11 @@ void menuUpdate(MenuMachine &machine)
 			machine.editing = false;
 			machine.state = MENU_STANDBY;
 		}
+		else if (selectedItem == MENU_ITEM_ELLIPSE_STATUS)
+		{
+			machine.editing = false;
+			machine.state = MENU_STANDBY;
+		}
 		else
 		{
 			machine.editing = !machine.editing;
@@ -477,7 +504,8 @@ void menuUpdate(MenuMachine &machine)
 void menuOutput(MenuMachine &machine)
 {
 	const unsigned long now = millis();
-	const bool shouldRefresh = machine.needsRefresh || machine.forceRefresh || (now - machine.lastRefreshMs >= 1000UL);
+	const bool ellipseStatusVisible = uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE && machine.selectedItem / MENU_ITEMS_PER_PAGE == 3;
+	const bool shouldRefresh = machine.needsRefresh || machine.forceRefresh || ellipseStatusVisible || (now - machine.lastRefreshMs >= 1000UL);
 	if (shouldRefresh)
 	{
 		buildDisplayTarget(machine);

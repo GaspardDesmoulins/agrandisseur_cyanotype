@@ -41,6 +41,8 @@ constexpr uint8_t LCD_COLS = 20;
 constexpr uint8_t LCD_ROWS = 4;
 constexpr uint8_t LCD_I2C_ADDR = 0x27;
 
+constexpr unsigned long MAX_EXPOSURE_DURATION_MS = 86400000UL;
+
 constexpr float DEFAULT_MAX_JUNCTION_TEMP_C = 50.0f;
 constexpr float WARNING_TEMP_C = 45.0f;
 
