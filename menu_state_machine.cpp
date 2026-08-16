@@ -23,6 +23,7 @@ namespace
 		MENU_ITEM_PRESET_INDEX,
 		MENU_ITEM_PRESET_DURATION,
 		MENU_ITEM_SAVE_PRESET,
+		MENU_ITEM_SCENARIO_STATUS,
 		MENU_ITEM_MAX_TEMPERATURE
 	};
 
@@ -33,7 +34,12 @@ namespace
 			return 7;
 		}
 
-		return uvServoMachine.exposureMode == SERVO_MODE_MANUAL ? 6 : 4;
+		if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
+		{
+			return 6;
+		}
+
+		return uvServoMachine.exposureMode == SERVO_MODE_SCENARIO ? 5 : 4;
 	}
 
 	MenuItem menuItemForIndex(uint8_t index)
@@ -96,6 +102,10 @@ namespace
 				return MENU_ITEM_SAVE_PRESET;
 			}
 		}
+		else if (uvServoMachine.exposureMode == SERVO_MODE_SCENARIO && index == 4)
+		{
+			return MENU_ITEM_SCENARIO_STATUS;
+		}
 
 		return MENU_ITEM_EXPOSURE_ACTION;
 	}
@@ -116,6 +126,18 @@ namespace
 	void formatRemainingTime(char *buffer, size_t bufferSize)
 	{
 		const unsigned long remainingMs = (exposureDurationMs > exposureElapsedMs) ? (exposureDurationMs - exposureElapsedMs) : 0UL;
+		const unsigned int remainingMinutes = remainingMs / 60000UL;
+		const unsigned int remainingSeconds = (remainingMs % 60000UL) / 1000UL;
+
+		snprintf(buffer, bufferSize, "%02u:%02u", remainingMinutes, remainingSeconds);
+	}
+
+	void formatScenarioRemainingTime(char *buffer, size_t bufferSize)
+	{
+		const UvServoPreset &preset = uvServoMachine.presets[uvServoMachine.scenarioPreset];
+		const unsigned long durationMs = static_cast<unsigned long>(preset.durationSeconds) * 1000UL;
+		const unsigned long elapsedMs = uvServoMachine.pwmEnabled ? millis() - uvServoMachine.lastScenarioMs : 0UL;
+		const unsigned long remainingMs = durationMs > elapsedMs ? durationMs - elapsedMs : 0UL;
 		const unsigned int remainingMinutes = remainingMs / 60000UL;
 		const unsigned int remainingSeconds = (remainingMs % 60000UL) / 1000UL;
 
@@ -237,6 +259,15 @@ namespace
 			renderMenuItem(machine, 2, MENU_ITEM_MANUAL_PAN, machine.selectedItem == 4, editing);
 			renderMenuItem(machine, 3, MENU_ITEM_MANUAL_TILT, machine.selectedItem == 5, editing);
 		}
+		else if (pageIndex == 2 && uvServoMachine.exposureMode == SERVO_MODE_SCENARIO)
+		{
+			char scenarioRemainingTime[6];
+			formatScenarioRemainingTime(scenarioRemainingTime, sizeof(scenarioRemainingTime));
+			snprintf(line, sizeof(line), "%cScenario P:%u/%u", editing ? '*' : '>', uvServoMachine.scenarioPreset + 1, SERVO_PRESET_COUNT);
+			setDisplayLine(machine, 2, line);
+			snprintf(line, sizeof(line), "R:%s P:%d T:%d", scenarioRemainingTime, uvServoMachine.panAngle, uvServoMachine.tiltAngle);
+			setDisplayLine(machine, 3, line);
+		}
 		else if (pageIndex == 2)
 		{
 			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 4, editing);
@@ -327,6 +358,7 @@ namespace
 			break;
 		case MENU_ITEM_EXPOSURE_ACTION:
 		case MENU_ITEM_SAVE_PRESET:
+		case MENU_ITEM_SCENARIO_STATUS:
 			break;
 		}
 	}
@@ -383,6 +415,11 @@ void menuUpdate(MenuMachine &machine)
 		else if (selectedItem == MENU_ITEM_SAVE_PRESET)
 		{
 			uvServoSaveManualPositionToPreset(uvServoMachine);
+			machine.editing = false;
+			machine.state = MENU_STANDBY;
+		}
+		else if (selectedItem == MENU_ITEM_SCENARIO_STATUS)
+		{
 			machine.editing = false;
 			machine.state = MENU_STANDBY;
 		}
