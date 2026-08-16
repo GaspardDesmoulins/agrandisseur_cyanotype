@@ -128,8 +128,6 @@ const char *uvServoModeLabel(ServoExposureMode mode)
 	{
 	case SERVO_MODE_MANUAL:
 		return "MANUEL";
-	case SERVO_MODE_PRESET:
-		return "PRESET";
 	case SERVO_MODE_SCENARIO:
 		return "SCENARIO";
 	case SERVO_MODE_ELLIPSE:
@@ -181,6 +179,8 @@ void uvServoSelectPreset(UvServoMachine &machine, int direction)
 {
 	const int nextPreset = (static_cast<int>(machine.selectedPreset) + direction + SERVO_PRESET_COUNT) % SERVO_PRESET_COUNT;
 	machine.selectedPreset = static_cast<uint8_t>(nextPreset);
+	const UvServoPreset &preset = machine.presets[machine.selectedPreset];
+	machine.manualPosition = {preset.panAngle, preset.tiltAngle};
 }
 
 void uvServoAdjustPresetDuration(UvServoMachine &machine, int direction)
@@ -266,12 +266,6 @@ void uvServoUpdate(UvServoMachine &machine)
 	{
 		machine.panAngle = clampPanAngle(machine.manualPosition.panAngle);
 		machine.tiltAngle = clampTiltAngle(machine.manualPosition.tiltAngle);
-	}
-	else if (machine.exposureMode == SERVO_MODE_PRESET)
-	{
-		const UvServoPreset &preset = machine.presets[machine.selectedPreset];
-		machine.panAngle = clampPanAngle(preset.panAngle);
-		machine.tiltAngle = clampTiltAngle(preset.tiltAngle);
 	}
 	else
 	{

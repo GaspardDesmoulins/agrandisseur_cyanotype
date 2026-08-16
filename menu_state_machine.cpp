@@ -35,14 +35,9 @@ namespace
 			return 8;
 		}
 
-		if (uvServoMachine.exposureMode == SERVO_MODE_PRESET)
-		{
-			return 7;
-		}
-
 		if (uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
 		{
-			return 6;
+			return 9;
 		}
 
 		return uvServoMachine.exposureMode == SERVO_MODE_SCENARIO ? 5 : 4;
@@ -96,18 +91,15 @@ namespace
 			{
 				return MENU_ITEM_MANUAL_TILT;
 			}
-		}
-		else if (uvServoMachine.exposureMode == SERVO_MODE_PRESET)
-		{
-			if (index == 4)
+			if (index == 6)
 			{
 				return MENU_ITEM_PRESET_INDEX;
 			}
-			if (index == 5)
+			if (index == 7)
 			{
 				return MENU_ITEM_PRESET_DURATION;
 			}
-			if (index == 6)
+			if (index == 8)
 			{
 				return MENU_ITEM_SAVE_PRESET;
 			}
@@ -293,10 +285,10 @@ namespace
 			snprintf(line, sizeof(line), "R:%s P:%d T:%d", scenarioRemainingTime, uvServoMachine.panAngle, uvServoMachine.tiltAngle);
 			setDisplayLine(machine, 3, line);
 		}
-		else if (pageIndex == 2)
+		else if (pageIndex == 3 && uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
 		{
-			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 4, editing);
-			renderMenuItem(machine, 3, MENU_ITEM_PRESET_DURATION, machine.selectedItem == 5, editing);
+			renderMenuItem(machine, 2, MENU_ITEM_PRESET_INDEX, machine.selectedItem == 6, editing);
+			renderMenuItem(machine, 3, MENU_ITEM_PRESET_DURATION, machine.selectedItem == 7, editing);
 		}
 		else if (uvServoMachine.exposureMode == SERVO_MODE_ELLIPSE)
 		{
@@ -305,9 +297,9 @@ namespace
 			snprintf(line, sizeof(line), "%cActuel P:%d T:%d", cursor, uvServoMachine.panAngle, uvServoMachine.tiltAngle);
 			setDisplayLine(machine, 3, line);
 		}
-		else
+		else if (pageIndex == 4 && uvServoMachine.exposureMode == SERVO_MODE_MANUAL)
 		{
-			renderMenuItem(machine, 2, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 6, editing);
+			renderMenuItem(machine, 2, MENU_ITEM_SAVE_PRESET, machine.selectedItem == 8, editing);
 			snprintf(line, sizeof(line), "P:%d T:%d %us", uvServoMachine.manualPosition.panAngle, uvServoMachine.manualPosition.tiltAngle, uvServoMachine.presets[uvServoMachine.selectedPreset].durationSeconds);
 			setDisplayLine(machine, 3, line);
 		}
@@ -447,12 +439,7 @@ void menuUpdate(MenuMachine &machine)
 			machine.editing = false;
 			machine.state = MENU_STANDBY;
 		}
-		else if (selectedItem == MENU_ITEM_SCENARIO_STATUS)
-		{
-			machine.editing = false;
-			machine.state = MENU_STANDBY;
-		}
-		else if (selectedItem == MENU_ITEM_ELLIPSE_STATUS)
+		else if (selectedItem == MENU_ITEM_SCENARIO_STATUS || selectedItem == MENU_ITEM_ELLIPSE_STATUS)
 		{
 			machine.editing = false;
 			machine.state = MENU_STANDBY;
