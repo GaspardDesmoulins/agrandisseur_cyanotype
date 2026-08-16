@@ -224,7 +224,14 @@ namespace
 		char line[LCD_COLS + 1];
 		char remainingTime[6];
 		formatRemainingTime(remainingTime, sizeof(remainingTime));
-		snprintf(line, sizeof(line), "EXPO:%s REST:%s", exposureActive ? "ON " : "OFF", remainingTime);
+		if (exposureActive)
+		{
+			snprintf(line, sizeof(line), "EXPO:%s", remainingTime);
+		}
+		else
+		{
+			snprintf(line, sizeof(line), "EXPO: OFF");
+		}
 		setDisplayLine(machine, 0, line);
 
 		if (junctionTempSensorFault)
